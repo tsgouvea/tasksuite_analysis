@@ -1,0 +1,627 @@
+
+% Default to the notebook output style
+
+    
+
+
+% Inherit from the specified cell style.
+
+
+
+
+    
+\documentclass[11pt]{article}
+
+    
+    
+    \usepackage[T1]{fontenc}
+    % Nicer default font (+ math font) than Computer Modern for most use cases
+    \usepackage{mathpazo}
+
+    % Basic figure setup, for now with no caption control since it's done
+    % automatically by Pandoc (which extracts ![](path) syntax from Markdown).
+    \usepackage{graphicx}
+    % We will generate all images so they have a width \maxwidth. This means
+    % that they will get their normal width if they fit onto the page, but
+    % are scaled down if they would overflow the margins.
+    \makeatletter
+    \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth
+    \else\Gin@nat@width\fi}
+    \makeatother
+    \let\Oldincludegraphics\includegraphics
+    % Set max figure width to be 80% of text width, for now hardcoded.
+    \renewcommand{\includegraphics}[1]{\Oldincludegraphics[width=.8\maxwidth]{#1}}
+    % Ensure that by default, figures have no caption (until we provide a
+    % proper Figure object with a Caption API and a way to capture that
+    % in the conversion process - todo).
+    \usepackage{caption}
+    \DeclareCaptionLabelFormat{nolabel}{}
+    \captionsetup{labelformat=nolabel}
+
+    \usepackage{adjustbox} % Used to constrain images to a maximum size 
+    \usepackage{xcolor} % Allow colors to be defined
+    \usepackage{enumerate} % Needed for markdown enumerations to work
+    \usepackage{geometry} % Used to adjust the document margins
+    \usepackage{amsmath} % Equations
+    \usepackage{amssymb} % Equations
+    \usepackage{textcomp} % defines textquotesingle
+    % Hack from http://tex.stackexchange.com/a/47451/13684:
+    \AtBeginDocument{%
+        \def\PYZsq{\textquotesingle}% Upright quotes in Pygmentized code
+    }
+    \usepackage{upquote} % Upright quotes for verbatim code
+    \usepackage{eurosym} % defines \euro
+    \usepackage[mathletters]{ucs} % Extended unicode (utf-8) support
+    \usepackage[utf8x]{inputenc} % Allow utf-8 characters in the tex document
+    \usepackage{fancyvrb} % verbatim replacement that allows latex
+    \usepackage{grffile} % extends the file name processing of package graphics 
+                         % to support a larger range 
+    % The hyperref package gives us a pdf with properly built
+    % internal navigation ('pdf bookmarks' for the table of contents,
+    % internal cross-reference links, web links for URLs, etc.)
+    \usepackage{hyperref}
+    \usepackage{longtable} % longtable support required by pandoc >1.10
+    \usepackage{booktabs}  % table support for pandoc > 1.12.2
+    \usepackage[inline]{enumitem} % IRkernel/repr support (it uses the enumerate* environment)
+    \usepackage[normalem]{ulem} % ulem is needed to support strikethroughs (\sout)
+                                % normalem makes italics be italics, not underlines
+    
+
+    
+    
+    % Colors for the hyperref package
+    \definecolor{urlcolor}{rgb}{0,.145,.698}
+    \definecolor{linkcolor}{rgb}{.71,0.21,0.01}
+    \definecolor{citecolor}{rgb}{.12,.54,.11}
+
+    % ANSI colors
+    \definecolor{ansi-black}{HTML}{3E424D}
+    \definecolor{ansi-black-intense}{HTML}{282C36}
+    \definecolor{ansi-red}{HTML}{E75C58}
+    \definecolor{ansi-red-intense}{HTML}{B22B31}
+    \definecolor{ansi-green}{HTML}{00A250}
+    \definecolor{ansi-green-intense}{HTML}{007427}
+    \definecolor{ansi-yellow}{HTML}{DDB62B}
+    \definecolor{ansi-yellow-intense}{HTML}{B27D12}
+    \definecolor{ansi-blue}{HTML}{208FFB}
+    \definecolor{ansi-blue-intense}{HTML}{0065CA}
+    \definecolor{ansi-magenta}{HTML}{D160C4}
+    \definecolor{ansi-magenta-intense}{HTML}{A03196}
+    \definecolor{ansi-cyan}{HTML}{60C6C8}
+    \definecolor{ansi-cyan-intense}{HTML}{258F8F}
+    \definecolor{ansi-white}{HTML}{C5C1B4}
+    \definecolor{ansi-white-intense}{HTML}{A1A6B2}
+
+    % commands and environments needed by pandoc snippets
+    % extracted from the output of `pandoc -s`
+    \providecommand{\tightlist}{%
+      \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+    \DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+    % Add ',fontsize=\small' for more characters per line
+    \newenvironment{Shaded}{}{}
+    \newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{{#1}}}
+    \newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{{#1}}}}
+    \newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{{#1}}}
+    \newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{{#1}}}
+    \newcommand{\RegionMarkerTok}[1]{{#1}}
+    \newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\NormalTok}[1]{{#1}}
+    
+    % Additional commands for more recent versions of Pandoc
+    \newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{{#1}}}
+    \newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{{#1}}}
+    \newcommand{\ImportTok}[1]{{#1}}
+    \newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{{#1}}}}
+    \newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{{#1}}}
+    \newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{{#1}}}
+    \newcommand{\BuiltInTok}[1]{{#1}}
+    \newcommand{\ExtensionTok}[1]{{#1}}
+    \newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{{#1}}}
+    \newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{{#1}}}
+    \newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    
+    
+    % Define a nice break command that doesn't care if a line doesn't already
+    % exist.
+    \def\br{\hspace*{\fill} \\* }
+    % Math Jax compatability definitions
+    \def\gt{>}
+    \def\lt{<}
+    % Document parameters
+    \title{discrate\_ds1}
+    
+    
+    
+
+    % Pygments definitions
+    
+\makeatletter
+\def\PY@reset{\let\PY@it=\relax \let\PY@bf=\relax%
+    \let\PY@ul=\relax \let\PY@tc=\relax%
+    \let\PY@bc=\relax \let\PY@ff=\relax}
+\def\PY@tok#1{\csname PY@tok@#1\endcsname}
+\def\PY@toks#1+{\ifx\relax#1\empty\else%
+    \PY@tok{#1}\expandafter\PY@toks\fi}
+\def\PY@do#1{\PY@bc{\PY@tc{\PY@ul{%
+    \PY@it{\PY@bf{\PY@ff{#1}}}}}}}
+\def\PY#1#2{\PY@reset\PY@toks#1+\relax+\PY@do{#2}}
+
+\expandafter\def\csname PY@tok@w\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.73,0.73}{##1}}}
+\expandafter\def\csname PY@tok@c\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.74,0.48,0.00}{##1}}}
+\expandafter\def\csname PY@tok@k\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.69,0.00,0.25}{##1}}}
+\expandafter\def\csname PY@tok@o\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@ow\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@ne\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.82,0.25,0.23}{##1}}}
+\expandafter\def\csname PY@tok@nv\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@no\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ni\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.60,0.60,0.60}{##1}}}
+\expandafter\def\csname PY@tok@na\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.49,0.56,0.16}{##1}}}
+\expandafter\def\csname PY@tok@nt\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@s\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sd\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@si\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@se\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sr\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@ss\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sx\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@m\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@gh\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gu\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.50,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gr\endcsname{\def\PY@tc##1{\textcolor[rgb]{1.00,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@ge\endcsname{\let\PY@it=\textit}
+\expandafter\def\csname PY@tok@gs\endcsname{\let\PY@bf=\textbf}
+\expandafter\def\csname PY@tok@gp\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@go\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.53,0.53}{##1}}}
+\expandafter\def\csname PY@tok@gt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.27,0.87}{##1}}}
+\expandafter\def\csname PY@tok@err\endcsname{\def\PY@bc##1{\setlength{\fboxsep}{0pt}\fcolorbox[rgb]{1.00,0.00,0.00}{1,1,1}{\strut ##1}}}
+\expandafter\def\csname PY@tok@kc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kd\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@kr\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@bp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@fm\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@vc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vg\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@vm\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sa\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@dl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@s2\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@s1\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@mb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@il\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mo\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@ch\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cm\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cpf\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@c1\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cs\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+
+\def\PYZbs{\char`\\}
+\def\PYZus{\char`\_}
+\def\PYZob{\char`\{}
+\def\PYZcb{\char`\}}
+\def\PYZca{\char`\^}
+\def\PYZam{\char`\&}
+\def\PYZlt{\char`\<}
+\def\PYZgt{\char`\>}
+\def\PYZsh{\char`\#}
+\def\PYZpc{\char`\%}
+\def\PYZdl{\char`\$}
+\def\PYZhy{\char`\-}
+\def\PYZsq{\char`\'}
+\def\PYZdq{\char`\"}
+\def\PYZti{\char`\~}
+% for compatibility with earlier versions
+\def\PYZat{@}
+\def\PYZlb{[}
+\def\PYZrb{]}
+\makeatother
+
+
+    % Exact colors from NB
+    \definecolor{incolor}{rgb}{0.0, 0.0, 0.5}
+    \definecolor{outcolor}{rgb}{0.545, 0.0, 0.0}
+
+
+
+    
+    % Prevent overflowing lines due to hard-to-break entities
+    \sloppy 
+    % Setup hyperref package
+    \hypersetup{
+      breaklinks=true,  % so long urls are correctly broken across lines
+      colorlinks=true,
+      urlcolor=urlcolor,
+      linkcolor=linkcolor,
+      citecolor=citecolor,
+      }
+    % Slightly bigger margins than the latex defaults
+    
+    \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+    
+    
+
+    \begin{document}
+    
+    
+    \maketitle
+    
+    
+
+    
+    \section{discrate\_ds1}\label{discrate_ds1}
+
+\emph{This notebook describes results of first run of
+\textbf{\href{https://github.com/tsgouvea/discrate/tree/309448f92ff401075592e49c7c32cb75fb58382a}{Discrate}},
+a 2AFC task that pitches reward rate against immediacy. In each trial,
+rats chose freely between two choice ports with different pre- and
+post-choice delays. Reward probability is 0.5,} iid \emph{across
+trials.}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}1}]:} \PY{k+kn}{import} \PY{n+nn}{os}
+        \PY{k+kn}{import} \PY{n+nn}{re}
+        
+        \PY{k+kn}{import} \PY{n+nn}{numpy} \PY{k}{as} \PY{n+nn}{np}
+        \PY{k+kn}{import} \PY{n+nn}{pandas} \PY{k}{as} \PY{n+nn}{pd}
+        \PY{k+kn}{import} \PY{n+nn}{matplotlib}\PY{n+nn}{.}\PY{n+nn}{pyplot} \PY{k}{as} \PY{n+nn}{plt}
+        \PY{k+kn}{import} \PY{n+nn}{matplotlib} \PY{k}{as} \PY{n+nn}{mp}
+        \PY{k+kn}{import} \PY{n+nn}{scipy}\PY{n+nn}{.}\PY{n+nn}{io} \PY{k}{as} \PY{n+nn}{sio}
+        \PY{k+kn}{import} \PY{n+nn}{scipy} \PY{k}{as} \PY{n+nn}{sp}
+        \PY{k+kn}{import} \PY{n+nn}{statsmodels}\PY{n+nn}{.}\PY{n+nn}{api} \PY{k}{as} \PY{n+nn}{sm}
+        \PY{k+kn}{from} \PY{n+nn}{IPython}\PY{n+nn}{.}\PY{n+nn}{display} \PY{k}{import} \PY{n}{display}\PY{p}{,} \PY{n}{HTML}
+        
+        \PY{k+kn}{from} \PY{n+nn}{tasks} \PY{k}{import} \PY{n}{discrate}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+/Users/thiago/Programs/anaconda2/envs/tasksuite/lib/python3.6/site-packages/statsmodels/compat/pandas.py:56: FutureWarning: The pandas.core.datetools module is deprecated and will be removed in a future version. Please use the pandas.tseries module instead.
+  from pandas.core import datetools
+
+    \end{Verbatim}
+
+    Load single sessions (Bpod .mat files stored in same repository as this
+notebook) and build pandas dataframes with session summary
+(\textbf{dataSumm}) and single trial (\textbf{dataSing}) data:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}2}]:} \PY{n}{path\PYZus{}ds1} \PY{o}{=} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{datasets/discrate\PYZus{}ds1/}\PY{l+s+s1}{\PYZsq{}}
+        \PY{n}{listSubj} \PY{o}{=} \PY{n+nb}{next}\PY{p}{(}\PY{n}{os}\PY{o}{.}\PY{n}{walk}\PY{p}{(}\PY{n}{path\PYZus{}ds1}\PY{p}{)}\PY{p}{)}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{]}
+        \PY{n}{listSubj}\PY{o}{.}\PY{n}{sort}\PY{p}{(}\PY{p}{)}
+        \PY{n}{listSess} \PY{o}{=} \PY{p}{[}\PY{p}{[}\PY{p}{]}\PY{p}{]}\PY{o}{*}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSubj}\PY{p}{)}
+        \PY{n}{dataSumm} \PY{o}{=} \PY{n}{discrate}\PY{o}{.}\PY{n}{multisess}\PY{p}{(}\PY{p}{)}
+        \PY{n}{dataSing} \PY{o}{=} \PY{p}{[}\PY{p}{[}\PY{p}{]}\PY{p}{]}\PY{o}{*}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSubj}\PY{p}{)}
+        \PY{n}{indSubj} \PY{o}{=} \PY{p}{[}\PY{p}{]}
+        \PY{n}{indDate} \PY{o}{=} \PY{p}{[}\PY{p}{]}
+        
+        \PY{n}{listDs} \PY{o}{=} \PY{n+nb}{open}\PY{p}{(}\PY{n}{os}\PY{o}{.}\PY{n}{path}\PY{o}{.}\PY{n}{join}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{datasets}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{discrate\PYZus{}ds1.txt}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{w}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+        \PY{k}{for} \PY{n}{iSubj} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSubj}\PY{p}{)}\PY{p}{)} \PY{p}{:}
+            \PY{n}{subj} \PY{o}{=} \PY{n}{listSubj}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}
+            \PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]} \PY{o}{=} \PY{n}{os}\PY{o}{.}\PY{n}{listdir}\PY{p}{(}\PY{n}{os}\PY{o}{.}\PY{n}{path}\PY{o}{.}\PY{n}{join}\PY{p}{(}\PY{n}{path\PYZus{}ds1}\PY{p}{,}\PY{n}{subj}\PY{p}{)}\PY{p}{)}
+            \PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{sort}\PY{p}{(}\PY{p}{)}
+            \PY{n}{dataSing}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]} \PY{o}{=} \PY{p}{[}\PY{p}{[}\PY{p}{]}\PY{p}{]}\PY{o}{*}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{n}{dates} \PY{o}{=} \PY{p}{[}\PY{p}{[}\PY{p}{]}\PY{p}{]}\PY{o}{*}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+        
+            \PY{k}{for} \PY{n}{iSess} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}\PY{p}{)} \PY{p}{:}
+                \PY{n}{sessName} \PY{o}{=} \PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}
+                \PY{n}{date} \PY{o}{=} \PY{n}{re}\PY{o}{.}\PY{n}{split}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZus{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}
+                \PY{n}{dates}\PY{p}{[}\PY{n}{iSess}\PY{p}{]} \PY{o}{=} \PY{n}{date}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{]}
+                \PY{n}{fname} \PY{o}{=} \PY{n}{os}\PY{o}{.}\PY{n}{path}\PY{o}{.}\PY{n}{join}\PY{p}{(}\PY{n}{path\PYZus{}ds1}\PY{p}{,}\PY{n}{subj}\PY{p}{,}\PY{n}{sessName}\PY{p}{)}
+                \PY{n}{listDs}\PY{o}{.}\PY{n}{write}\PY{p}{(}\PY{n}{fname} \PY{o}{+} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                \PY{n}{mysess} \PY{o}{=} \PY{n}{sio}\PY{o}{.}\PY{n}{loadmat}\PY{p}{(}\PY{n}{fname}\PY{p}{,} \PY{n}{squeeze\PYZus{}me}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
+                \PY{n}{parsed} \PY{o}{=} \PY{n}{discrate}\PY{o}{.}\PY{n}{parser}\PY{p}{(}\PY{n}{mysess}\PY{p}{)}
+                \PY{n}{parsed}\PY{o}{.}\PY{n}{parse}\PY{p}{(}\PY{p}{)}
+                \PY{n}{dataSumm}\PY{o}{.}\PY{n}{append}\PY{p}{(}\PY{n}{parsed}\PY{p}{)}
+                \PY{n}{dataSing}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{[}\PY{n}{iSess}\PY{p}{]} \PY{o}{=} \PY{n}{parsed}\PY{o}{.}\PY{n}{parsedData}
+                \PY{n}{indSubj}\PY{o}{.}\PY{n}{append}\PY{p}{(}\PY{n}{listSubj}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+                \PY{n}{indDate}\PY{o}{.}\PY{n}{append}\PY{p}{(}\PY{n}{date}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{]}\PY{p}{)}
+                
+        \PY{n}{listDs}\PY{o}{.}\PY{n}{close}\PY{p}{(}\PY{p}{)}
+        \PY{n}{dataSumm}\PY{o}{.}\PY{n}{summary}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{subject}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{indSubj}
+        \PY{n}{dataSumm}\PY{o}{.}\PY{n}{summary}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{date}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{indDate}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+/Users/thiago/Documents/TaskSuite/tasks/discrate.py:167: RuntimeWarning: divide by zero encountered in double\_scalars
+  logOdds = np.log(pLeft/(1-pLeft))
+/Users/thiago/Documents/TaskSuite/tasks/discrate.py:167: RuntimeWarning: divide by zero encountered in log
+  logOdds = np.log(pLeft/(1-pLeft))
+
+    \end{Verbatim}
+
+    \subsection{Response rate depends on pre- and post-reward
+delays}\label{response-rate-depends-on-pre--and-post-reward-delays}
+
+    Plot figure 1:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}3}]:} \PY{n}{hf}\PY{p}{,} \PY{n}{hsps} \PY{o}{=} \PY{n}{plt}\PY{o}{.}\PY{n}{subplots}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSubj}\PY{p}{)}\PY{p}{,}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{15}\PY{p}{,}\PY{l+m+mi}{9}\PY{p}{)}\PY{p}{)}
+        
+        \PY{k}{for} \PY{n}{iSubj} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSubj}\PY{p}{)}\PY{p}{)} \PY{p}{:}
+            \PY{k}{for} \PY{n}{iSess} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}\PY{p}{)} \PY{p}{:}
+                \PY{n}{plt}\PY{o}{.}\PY{n}{subplot}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSubj}\PY{p}{)}\PY{p}{,}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{l+m+mi}{1} \PY{o}{+} \PY{p}{(}\PY{n}{iSubj}\PY{o}{*}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}\PY{p}{)} \PY{o}{+} \PY{n}{iSess}\PY{p}{)}
+        
+                \PY{n}{ndxChoL} \PY{o}{=} \PY{n}{dataSing}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{o}{.}\PY{n}{ChoiceLeft}\PY{o}{.}\PY{n}{values}
+                \PY{n}{ndxChoR} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{logical\PYZus{}not}\PY{p}{(}\PY{n}{ndxChoL}\PY{p}{)}
+                \PY{n}{plt}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{asarray}\PY{p}{(}\PY{n}{dataSing}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{o}{.}\PY{n}{tsState0}\PY{o}{.}\PY{n}{values}\PY{p}{[}\PY{n}{ndxChoL}\PY{p}{]}\PY{o}{\PYZhy{}}\PY{n}{dataSing}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{o}{.}\PY{n}{tsState0}\PY{o}{.}\PY{n}{values}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{p}{)}\PY{o}{/}\PY{l+m+mi}{60}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{arange}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{ndxChoL}\PY{p}{)}\PY{p}{)}\PY{p}{,} \PY{n}{color}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:mango}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                \PY{n}{plt}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{asarray}\PY{p}{(}\PY{n}{dataSing}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{o}{.}\PY{n}{tsState0}\PY{o}{.}\PY{n}{values}\PY{p}{[}\PY{n}{ndxChoR}\PY{p}{]}\PY{o}{\PYZhy{}}\PY{n}{dataSing}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{o}{.}\PY{n}{tsState0}\PY{o}{.}\PY{n}{values}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{p}{)}\PY{o}{/}\PY{l+m+mi}{60}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{arange}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{ndxChoR}\PY{p}{)}\PY{p}{)}\PY{p}{,} \PY{n}{color}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:darkish green}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                
+                \PY{k}{if} \PY{p}{(}\PY{n}{iSess} \PY{o}{\PYZgt{}} \PY{l+m+mi}{0} \PY{o+ow}{or} \PY{n}{iSubj} \PY{o}{\PYZgt{}} \PY{l+m+mi}{0}\PY{p}{)} \PY{p}{:}
+                    \PY{n}{plt}\PY{o}{.}\PY{n}{xticks}\PY{p}{(}\PY{p}{[}\PY{p}{]}\PY{p}{)}
+                    
+                \PY{k}{if} \PY{n}{iSess} \PY{o}{==} \PY{l+m+mi}{0} \PY{p}{:}
+                    \PY{n}{plt}\PY{o}{.}\PY{n}{ylabel}\PY{p}{(}\PY{n}{listSubj}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+                    
+                \PY{k}{if} \PY{n}{iSubj} \PY{o}{==} \PY{l+m+mi}{0} \PY{p}{:}
+                    \PY{n}{date} \PY{o}{=} \PY{n}{re}\PY{o}{.}\PY{n}{split}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZus{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{n}{listSess}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}
+                    \PY{n}{plt}\PY{o}{.}\PY{n}{title}\PY{p}{(}\PY{n}{date}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{]}\PY{p}{)}
+        
+        \PY{n}{plt}\PY{o}{.}\PY{n}{tight\PYZus{}layout}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_6_0.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \textbf{Figure 1: Response rates} Cumulative sum of responses at left
+(yellow) and right (green) choice ports as a function of time since
+session start. All sessions lasted 90 min. n = 5 subjects, 9 sessions
+each.
+
+    Display pre- and post- reward delays used in each session:
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}4}]:} \PY{n}{pivoted} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{pivot\PYZus{}table}\PY{p}{(}\PY{n}{dataSumm}\PY{o}{.}\PY{n}{summary}\PY{p}{,}\PY{n}{index}\PY{o}{=}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{subject}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{date}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+        \PY{n}{display}\PY{p}{(}\PY{n}{pivoted}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{n}{pivoted}\PY{o}{.}\PY{n}{columns}\PY{p}{[}\PY{p}{:}\PY{p}{:}\PY{o}{\PYZhy{}}\PY{l+m+mi}{1}\PY{p}{]}\PY{p}{]}\PY{p}{)}
+\end{Verbatim}
+
+
+    
+    \begin{verbatim}
+               preR  preL  posR  posL     pLeft   logOdds
+subject date                                             
+AZ025   Feb08   2.0   2.0  32.0   2.0  0.917782  2.412586
+        Feb09   2.0   4.0  32.0   2.0  0.926941  2.540617
+        Feb10   2.0   8.0  16.0   2.0  0.436667 -0.254701
+        Feb11   2.0   8.0  16.0   2.0  0.092025 -2.289162
+        Feb12   2.0   8.0   8.0   2.0  0.026005 -3.623128
+        Feb13   2.0   8.0  16.0   2.0  0.025641 -3.637586
+        Feb14   2.0   4.0  16.0   2.0  0.007407 -4.897840
+        Feb15   NaN   4.0   NaN   2.0  1.000000       inf
+        Feb16   2.0   2.0  32.0   2.0  0.844828  1.694596
+M11     Feb08   2.0   2.0  32.0   2.0  0.957377  3.111804
+        Feb09   2.0   4.0  32.0   2.0  0.811765  1.461518
+        Feb10   2.0   8.0  16.0   2.0  0.271777 -0.985625
+        Feb11   2.0   8.0  16.0   2.0  0.129630 -1.904237
+        Feb12   2.0   8.0   8.0   2.0  0.044393 -3.069276
+        Feb13   2.0   8.0  16.0   2.0  0.034483 -3.332205
+        Feb14   2.0   4.0  16.0   2.0  0.025180 -3.656209
+        Feb15   2.0   4.0  32.0   2.0  0.086957 -2.351375
+        Feb16   2.0   2.0  32.0   2.0  0.026144 -3.617652
+M12     Feb08   2.0   2.0  32.0   2.0  0.825397  1.553348
+        Feb09   2.0   4.0  32.0   2.0  0.728522  0.987138
+        Feb10   2.0   8.0  16.0   2.0  0.440559 -0.238892
+        Feb11   2.0   8.0  16.0   2.0  0.179104 -1.522427
+        Feb12   2.0   8.0   8.0   2.0  0.109827 -2.092514
+        Feb13   2.0   8.0  16.0   2.0  0.066148 -2.647426
+        Feb14   2.0   4.0  16.0   2.0  0.060837 -2.736800
+        Feb15   2.0   4.0  32.0   2.0  0.031915 -3.412247
+        Feb16   2.0   2.0  32.0   2.0  0.061224 -2.730029
+TG021   Feb08   2.0   2.0  32.0   2.0  0.781327  1.273415
+        Feb09   2.0   4.0  32.0   2.0  0.637324  0.563768
+        Feb10   2.0   8.0  16.0   2.0  0.112245 -2.068013
+        Feb11   2.0   8.0  16.0   2.0  0.028070 -3.544576
+        Feb12   2.0   8.0   8.0   2.0  0.036876 -3.262611
+        Feb13   2.0   8.0  16.0   2.0  0.028470 -3.530030
+        Feb14   2.0   4.0  16.0   2.0  0.003559 -5.634790
+        Feb15   2.0   4.0  32.0   2.0  0.012739 -4.350278
+        Feb16   2.0   NaN  32.0   NaN  0.000000      -inf
+TG022   Feb08   2.0   2.0  32.0   2.0  0.945946  2.862201
+        Feb09   2.0   4.0  32.0   2.0  0.769006  1.202706
+        Feb10   2.0   8.0  16.0   2.0  0.465950 -0.136412
+        Feb11   2.0   8.0  16.0   2.0  0.255556 -1.069198
+        Feb12   2.0   8.0   8.0   2.0  0.272021 -0.984394
+        Feb13   2.0   8.0  16.0   2.0  0.216606 -1.285553
+        Feb14   2.0   4.0  16.0   2.0  0.312303 -0.789375
+        Feb15   2.0   4.0  32.0   2.0  0.547414  0.190227
+        Feb16   2.0   2.0  32.0   2.0  0.697211  0.834053
+    \end{verbatim}
+
+    
+    \textbf{Table 1: Delays} Delays pre- and post- left and right choices,
+fraction of left choices, and log odds of choices
+
+    \subsection{Is choice best explained by pre-, post-, os
+summed-delays?}\label{is-choice-best-explained-by-pre--post--os-summed-delays}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}5}]:} \PY{n}{hf}\PY{p}{,} \PY{n}{ha} \PY{o}{=} \PY{n}{plt}\PY{o}{.}\PY{n}{subplots}\PY{p}{(}\PY{l+m+mi}{4}\PY{p}{,}\PY{l+m+mi}{5}\PY{p}{,}\PY{n}{sharey}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{all}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{n}{sharex}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{row}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{15}\PY{p}{,}\PY{l+m+mi}{9}\PY{p}{)}\PY{p}{)}
+        \PY{n}{colors} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:tomato}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:golden}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:pumpkin}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:aqua blue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:dark sky blue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{k}{for} \PY{n}{iSubj} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSubj}\PY{p}{)}\PY{p}{)} \PY{p}{:}
+            \PY{n}{ndxSubj} \PY{o}{=} \PY{n}{dataSumm}\PY{o}{.}\PY{n}{summary}\PY{o}{.}\PY{n}{dropna}\PY{p}{(}\PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{any}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{subject}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{n}{listSubj}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}
+            
+            \PY{n}{y} \PY{o}{=} \PY{n}{dataSumm}\PY{o}{.}\PY{n}{summary}\PY{o}{.}\PY{n}{dropna}\PY{p}{(}\PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{any}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{ndxSubj}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{pLeft}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+            \PY{n}{yLog} \PY{o}{=} \PY{n}{dataSumm}\PY{o}{.}\PY{n}{summary}\PY{o}{.}\PY{n}{dropna}\PY{p}{(}\PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{any}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{ndxSubj}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{logOdds}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+            \PY{n}{X} \PY{o}{=} \PY{n}{dataSumm}\PY{o}{.}\PY{n}{summary}\PY{o}{.}\PY{n}{dropna}\PY{p}{(}\PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{any}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{p}{[}\PY{n}{ndxSubj}\PY{p}{]}
+            
+            \PY{c+c1}{\PYZsh{} Model 1: Pre\PYZhy{}reward delays}
+            \PY{n}{Xa} \PY{o}{=} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{preR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PY{n}{values} \PY{o}{\PYZhy{}} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{preL}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{scatter}\PY{p}{(}\PY{n}{Xa}\PY{p}{,}\PY{n}{y}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}title}\PY{p}{(}\PY{n}{listSubj}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{n}{mdl} \PY{o}{=} \PY{n}{sm}\PY{o}{.}\PY{n}{OLS}\PY{p}{(}\PY{n}{yLog}\PY{p}{,}\PY{n}{sm}\PY{o}{.}\PY{n}{add\PYZus{}constant}\PY{p}{(}\PY{n}{Xa}\PY{p}{)}\PY{p}{)}\PY{o}{.}\PY{n}{fit}\PY{p}{(}\PY{p}{)}
+            \PY{n}{xcont} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{linspace}\PY{p}{(}\PY{n}{Xa}\PY{o}{.}\PY{n}{min}\PY{p}{(}\PY{p}{)}\PY{p}{,}\PY{n}{Xa}\PY{o}{.}\PY{n}{max}\PY{p}{(}\PY{p}{)}\PY{p}{,}\PY{l+m+mi}{50}\PY{p}{)}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{xcont}\PY{p}{,}\PY{l+m+mi}{1}\PY{o}{/}\PY{p}{(}\PY{l+m+mi}{1}\PY{o}{+}\PY{n}{np}\PY{o}{.}\PY{n}{exp}\PY{p}{(}\PY{o}{\PYZhy{}}\PY{n}{mdl}\PY{o}{.}\PY{n}{predict}\PY{p}{(}\PY{n}{sm}\PY{o}{.}\PY{n}{add\PYZus{}constant}\PY{p}{(}\PY{n}{xcont}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{k}{if} \PY{n}{iSubj} \PY{o}{==} \PY{l+m+mi}{0} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}Pre\PYZus{}R \PYZhy{} Pre\PYZus{}L\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}P(left)\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+            
+            \PY{c+c1}{\PYZsh{} Model 2: Post\PYZhy{}reward delays}
+            \PY{n}{Xb} \PY{o}{=} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{posR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PY{n}{values} \PY{o}{\PYZhy{}} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{posL}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{scatter}\PY{p}{(}\PY{n}{Xb}\PY{p}{,}\PY{n}{y}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{n}{mdl} \PY{o}{=} \PY{n}{sm}\PY{o}{.}\PY{n}{OLS}\PY{p}{(}\PY{n}{yLog}\PY{p}{,}\PY{n}{sm}\PY{o}{.}\PY{n}{add\PYZus{}constant}\PY{p}{(}\PY{n}{Xb}\PY{p}{)}\PY{p}{)}\PY{o}{.}\PY{n}{fit}\PY{p}{(}\PY{p}{)}
+            \PY{n}{xcont} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{linspace}\PY{p}{(}\PY{n}{Xb}\PY{o}{.}\PY{n}{min}\PY{p}{(}\PY{p}{)}\PY{p}{,}\PY{n}{Xb}\PY{o}{.}\PY{n}{max}\PY{p}{(}\PY{p}{)}\PY{p}{,}\PY{l+m+mi}{50}\PY{p}{)}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{xcont}\PY{p}{,}\PY{l+m+mi}{1}\PY{o}{/}\PY{p}{(}\PY{l+m+mi}{1}\PY{o}{+}\PY{n}{np}\PY{o}{.}\PY{n}{exp}\PY{p}{(}\PY{o}{\PYZhy{}}\PY{n}{mdl}\PY{o}{.}\PY{n}{predict}\PY{p}{(}\PY{n}{sm}\PY{o}{.}\PY{n}{add\PYZus{}constant}\PY{p}{(}\PY{n}{xcont}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{k}{if} \PY{n}{iSubj} \PY{o}{==} \PY{l+m+mi}{0} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}Post\PYZus{}R \PYZhy{} Post\PYZus{}L\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}P(left)\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+            
+            \PY{c+c1}{\PYZsh{} Model 3: Total trial duration}
+            \PY{n}{Xc} \PY{o}{=} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{preR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{posR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{)}\PY{o}{.}\PY{n}{values}\PY{o}{\PYZhy{}}\PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{preL}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{posL}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{)}\PY{o}{.}\PY{n}{values}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{scatter}\PY{p}{(}\PY{n}{Xc}\PY{p}{,}\PY{n}{y}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{n}{mdl} \PY{o}{=} \PY{n}{sm}\PY{o}{.}\PY{n}{OLS}\PY{p}{(}\PY{n}{yLog}\PY{p}{,}\PY{n}{sm}\PY{o}{.}\PY{n}{add\PYZus{}constant}\PY{p}{(}\PY{n}{Xc}\PY{p}{)}\PY{p}{)}\PY{o}{.}\PY{n}{fit}\PY{p}{(}\PY{p}{)}
+            \PY{n}{xcont} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{linspace}\PY{p}{(}\PY{n}{Xc}\PY{o}{.}\PY{n}{min}\PY{p}{(}\PY{p}{)}\PY{p}{,}\PY{n}{Xc}\PY{o}{.}\PY{n}{max}\PY{p}{(}\PY{p}{)}\PY{p}{,}\PY{l+m+mi}{50}\PY{p}{)}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{xcont}\PY{p}{,}\PY{l+m+mi}{1}\PY{o}{/}\PY{p}{(}\PY{l+m+mi}{1}\PY{o}{+}\PY{n}{np}\PY{o}{.}\PY{n}{exp}\PY{p}{(}\PY{o}{\PYZhy{}}\PY{n}{mdl}\PY{o}{.}\PY{n}{predict}\PY{p}{(}\PY{n}{sm}\PY{o}{.}\PY{n}{add\PYZus{}constant}\PY{p}{(}\PY{n}{xcont}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{)}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{k}{if} \PY{n}{iSubj} \PY{o}{==} \PY{l+m+mi}{0} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}TrialDur\PYZus{}R \PYZhy{} TrialDur\PYZus{}L\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}P(left)\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+            \PY{c+c1}{\PYZsh{} Model 4: Multivariate (pre\PYZhy{} and post\PYZhy{} independently)}
+            \PY{n}{M} \PY{o}{=} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{preL}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{posR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PY{n}{values}
+            \PY{n}{mdl} \PY{o}{=} \PY{n}{sm}\PY{o}{.}\PY{n}{OLS}\PY{p}{(}\PY{n}{yLog}\PY{p}{,}\PY{n}{sm}\PY{o}{.}\PY{n}{add\PYZus{}constant}\PY{p}{(}\PY{n}{M}\PY{p}{)}\PY{p}{)}\PY{o}{.}\PY{n}{fit}\PY{p}{(}\PY{p}{)}
+            \PY{n}{Xd} \PY{o}{=} \PY{n}{mdl}\PY{o}{.}\PY{n}{predict}\PY{p}{(}\PY{n}{sm}\PY{o}{.}\PY{n}{add\PYZus{}constant}\PY{p}{(}\PY{n}{M}\PY{p}{)}\PY{p}{)}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{3}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{scatter}\PY{p}{(}\PY{n}{Xd}\PY{p}{,}\PY{n}{y}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{n}{xcont} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{linspace}\PY{p}{(}\PY{n}{Xd}\PY{o}{.}\PY{n}{min}\PY{p}{(}\PY{p}{)}\PY{p}{,}\PY{n}{Xd}\PY{o}{.}\PY{n}{max}\PY{p}{(}\PY{p}{)}\PY{p}{,}\PY{l+m+mi}{50}\PY{p}{)}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{3}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{xcont}\PY{p}{,}\PY{l+m+mi}{1}\PY{o}{/}\PY{p}{(}\PY{l+m+mi}{1}\PY{o}{+}\PY{n}{np}\PY{o}{.}\PY{n}{exp}\PY{p}{(}\PY{o}{\PYZhy{}}\PY{n}{xcont}\PY{p}{)}\PY{p}{)}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{k}{if} \PY{n}{iSubj} \PY{o}{==} \PY{l+m+mi}{0} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{3}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Multivariate, complete}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{3}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}P(left)\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+            
+        \PY{n}{plt}\PY{o}{.}\PY{n}{tight\PYZus{}layout}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_12_0.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \textbf{Figure 2: Regresion models for P(choice)} n = 5 subjects, 9
+sessions each. Model specifications:
+
+Model 1: \(log{\frac{P_L}{(1-P_L)}} = \beta_0 + \beta_1(Pre_R - Pre_L)\)
+
+Model 2:
+\(log{\frac{P_L}{(1-P_L)}} = \beta_0 + \beta_1(Post_R - Post_L)\)
+
+Model 3:
+\(log{\frac{P_L}{(1-P_L)}} = \beta_0 + \beta_1(Pre_R + Post_R - Pre_L - Post_L)\)
+
+Model 4*:
+\(log{\frac{P_L}{(1-P_L)}} = \beta_0 + \beta_1Pre_L + \beta_2Post_R\)
+
+(* \(Post_L\) and \(Post_R\) are constants and were thus left out)
+
+    \subsection{Histeresis on the relation between delays and
+P(choice)}\label{histeresis-on-the-relation-between-delays-and-pchoice}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}6}]:} \PY{n}{hf}\PY{p}{,} \PY{n}{ha} \PY{o}{=} \PY{n}{plt}\PY{o}{.}\PY{n}{subplots}\PY{p}{(}\PY{l+m+mi}{4}\PY{p}{,}\PY{l+m+mi}{5}\PY{p}{,}\PY{n}{sharey}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{all}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{n}{sharex}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{row}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{15}\PY{p}{,}\PY{l+m+mi}{9}\PY{p}{)}\PY{p}{)}
+        \PY{n}{colors} \PY{o}{=} \PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:tomato}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:golden}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:pumpkin}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:aqua blue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{xkcd:dark sky blue}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+        \PY{k}{for} \PY{n}{iSubj} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{n+nb}{len}\PY{p}{(}\PY{n}{listSubj}\PY{p}{)}\PY{p}{)} \PY{p}{:}
+            \PY{n}{ndxSubj} \PY{o}{=} \PY{n}{dataSumm}\PY{o}{.}\PY{n}{summary}\PY{o}{.}\PY{n}{dropna}\PY{p}{(}\PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{any}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{subject}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{n}{listSubj}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}
+        
+            \PY{n}{y} \PY{o}{=} \PY{n}{dataSumm}\PY{o}{.}\PY{n}{summary}\PY{o}{.}\PY{n}{dropna}\PY{p}{(}\PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{any}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{ndxSubj}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{pLeft}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+            \PY{n}{yLog} \PY{o}{=} \PY{n}{dataSumm}\PY{o}{.}\PY{n}{summary}\PY{o}{.}\PY{n}{dropna}\PY{p}{(}\PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{any}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{ndxSubj}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{logOdds}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}
+            \PY{n}{X} \PY{o}{=} \PY{n}{dataSumm}\PY{o}{.}\PY{n}{summary}\PY{o}{.}\PY{n}{dropna}\PY{p}{(}\PY{n}{how}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{any}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}\PY{p}{[}\PY{n}{ndxSubj}\PY{p}{]}
+            
+            \PY{c+c1}{\PYZsh{} Model 1: Pre\PYZhy{}reward delays}
+            \PY{n}{Xa} \PY{o}{=} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{preR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PY{n}{values} \PY{o}{\PYZhy{}} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{preL}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{arrow}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{Xa}\PY{o}{.}\PY{n}{iloc}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{y}\PY{o}{.}\PY{n}{iloc}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{diff}\PY{p}{(}\PY{n}{Xa}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{diff}\PY{p}{(}\PY{n}{y}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{head\PYZus{}width}\PY{o}{=}\PY{l+m+mf}{0.1}\PY{p}{,}\PY{n}{head\PYZus{}length}\PY{o}{=}\PY{l+m+mf}{0.6}\PY{p}{,}\PY{n}{length\PYZus{}includes\PYZus{}head}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
+            \PY{k}{for} \PY{n}{iSess} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{l+m+mi}{1}\PY{p}{,}\PY{n+nb}{len}\PY{p}{(}\PY{n}{y}\PY{p}{)}\PY{o}{\PYZhy{}}\PY{l+m+mi}{1}\PY{p}{)} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{arrow}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{Xa}\PY{o}{.}\PY{n}{iloc}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{y}\PY{o}{.}\PY{n}{iloc}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{diff}\PY{p}{(}\PY{n}{Xa}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{diff}\PY{p}{(}\PY{n}{y}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{)}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{scatter}\PY{p}{(}\PY{n}{Xa}\PY{p}{,}\PY{n}{y}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}title}\PY{p}{(}\PY{n}{listSubj}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{k}{if} \PY{n}{iSubj} \PY{o}{==} \PY{l+m+mi}{0} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}Pre\PYZus{}R \PYZhy{} Pre\PYZus{}L\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}P(left)\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+            \PY{c+c1}{\PYZsh{} Model 2: Post\PYZhy{}reward delays}
+            \PY{n}{Xb} \PY{o}{=} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{posR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PY{n}{values} \PY{o}{\PYZhy{}} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{posL}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}
+            \PY{k}{for} \PY{n}{iSess} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,}\PY{n+nb}{len}\PY{p}{(}\PY{n}{y}\PY{p}{)}\PY{o}{\PYZhy{}}\PY{l+m+mi}{1}\PY{p}{)} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{arrow}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{Xb}\PY{o}{.}\PY{n}{iloc}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{y}\PY{o}{.}\PY{n}{iloc}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{diff}\PY{p}{(}\PY{n}{Xb}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{diff}\PY{p}{(}\PY{n}{y}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{)}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{scatter}\PY{p}{(}\PY{n}{Xb}\PY{p}{,}\PY{n}{y}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{k}{if} \PY{n}{iSubj} \PY{o}{==} \PY{l+m+mi}{0} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}Post\PYZus{}R \PYZhy{} Post\PYZus{}L\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}P(left)\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+            \PY{c+c1}{\PYZsh{} Model 3: Total trial duration}
+            \PY{n}{Xc} \PY{o}{=} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{preR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{posR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{)}\PY{o}{.}\PY{n}{values}\PY{o}{\PYZhy{}}\PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{preL}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{posL}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{)}\PY{o}{.}\PY{n}{values}
+            \PY{k}{for} \PY{n}{iSess} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,}\PY{n+nb}{len}\PY{p}{(}\PY{n}{y}\PY{p}{)}\PY{o}{\PYZhy{}}\PY{l+m+mi}{1}\PY{p}{)} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{arrow}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{Xc}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{y}\PY{o}{.}\PY{n}{iloc}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{diff}\PY{p}{(}\PY{n}{Xc}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{diff}\PY{p}{(}\PY{n}{y}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{)}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{scatter}\PY{p}{(}\PY{n}{Xc}\PY{p}{,}\PY{n}{y}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{k}{if} \PY{n}{iSubj} \PY{o}{==} \PY{l+m+mi}{0} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}TrialDur\PYZus{}R \PYZhy{} TrialDur\PYZus{}L\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{2}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}P(left)\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        
+            \PY{c+c1}{\PYZsh{} Model 4: Multivariate (pre\PYZhy{} and post\PYZhy{} independently)}
+            \PY{n}{M} \PY{o}{=} \PY{n}{X}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{p}{:}\PY{p}{,}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{preL}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{posR}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PY{n}{values}
+            \PY{n}{mdl} \PY{o}{=} \PY{n}{sm}\PY{o}{.}\PY{n}{OLS}\PY{p}{(}\PY{n}{yLog}\PY{p}{,}\PY{n}{sm}\PY{o}{.}\PY{n}{add\PYZus{}constant}\PY{p}{(}\PY{n}{M}\PY{p}{)}\PY{p}{)}\PY{o}{.}\PY{n}{fit}\PY{p}{(}\PY{p}{)}
+            \PY{n}{Xd} \PY{o}{=} \PY{n}{mdl}\PY{o}{.}\PY{n}{predict}\PY{p}{(}\PY{n}{sm}\PY{o}{.}\PY{n}{add\PYZus{}constant}\PY{p}{(}\PY{n}{M}\PY{p}{)}\PY{p}{)}
+            \PY{k}{for} \PY{n}{iSess} \PY{o+ow}{in} \PY{n+nb}{range}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,}\PY{n+nb}{len}\PY{p}{(}\PY{n}{y}\PY{p}{)}\PY{o}{\PYZhy{}}\PY{l+m+mi}{1}\PY{p}{)} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{3}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{arrow}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{Xd}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{y}\PY{o}{.}\PY{n}{iloc}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{diff}\PY{p}{(}\PY{n}{Xd}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{,}\PY{n}{np}\PY{o}{.}\PY{n}{asscalar}\PY{p}{(}\PY{n}{np}\PY{o}{.}\PY{n}{diff}\PY{p}{(}\PY{n}{y}\PY{p}{,}\PY{n}{axis}\PY{o}{=}\PY{l+m+mi}{0}\PY{p}{)}\PY{p}{[}\PY{n}{iSess}\PY{p}{]}\PY{p}{)}\PY{p}{)}
+            \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{3}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{scatter}\PY{p}{(}\PY{n}{Xd}\PY{p}{,}\PY{n}{y}\PY{p}{,}\PY{n}{color}\PY{o}{=}\PY{n}{colors}\PY{p}{[}\PY{n}{iSubj}\PY{p}{]}\PY{p}{)}
+            \PY{k}{if} \PY{n}{iSubj} \PY{o}{==} \PY{l+m+mi}{0} \PY{p}{:}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{3}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Multivariate, complete}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                \PY{n}{ha}\PY{p}{[}\PY{l+m+mi}{3}\PY{p}{,}\PY{n}{iSubj}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{\PYZdl{}P(left)\PYZdl{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                
+        \PY{n}{plt}\PY{o}{.}\PY{n}{tight\PYZus{}layout}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_15_0.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \textbf{Figure 3: Histeresis in how delays affect P(choice)} Scatter
+plots are identical to those in Figure 2. For top row, first session is
+top-right data point for all animals, as indicated by arrow. Sequence of
+sessions in indicated by lines connecting dots.
+
+    Histeresis is probably explained by lack of exploration: this would be
+expected if animals stuck to whatever policy they had at the end of the
+previous session. If that's the case, the same should not be observed
+under \textbf{discrate\_ds2}.
+
+
+    % Add a bibliography block to the postdoc
+    
+    
+    
+    \end{document}
