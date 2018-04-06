@@ -157,16 +157,12 @@ class multisess:
         self.summary = pd.DataFrame({'preL': [], 'preR': [], 'posL': [], 'posR': [], 'pLeft': [], 'logOdds': []})
 
     def append(self,parserOutput):
-        if parserOutput.params.LeftA == 1 :
-            preL = parserOutput.params.PreA
-            posL = parserOutput.params.PostA
-            preR = parserOutput.params.PreB
-            posR = parserOutput.params.PostB
-        elif parserOutput.params.LeftA == 0 :
-            preL = parserOutput.params.PreB
-            posL = parserOutput.params.PostB
-            preR = parserOutput.params.PreA
-            posR = parserOutput.params.PostA
+        ndxChoL = parserOutput.parsedData.ChoiceLeft
+        preL = parserOutput.parsedData.delayPre[ndxChoL].median()
+        posL = parserOutput.parsedData.delayPost[ndxChoL].median()
+        ndxChoR = np.logical_not(ndxChoL)
+        preR = parserOutput.parsedData.delayPre[ndxChoR].median()
+        posR = parserOutput.parsedData.delayPost[ndxChoR].median()
         pLeft = np.mean(parserOutput.parsedData.ChoiceLeft.values)
         logOdds = np.log(pLeft/(1-pLeft))
         self.summary = self.summary.append({'preL': preL, 'preR': preR, 'posL': posL, 'posR': posR, 'pLeft': pLeft, 'logOdds': logOdds}, ignore_index=True)
