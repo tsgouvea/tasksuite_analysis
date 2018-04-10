@@ -157,12 +157,13 @@ class multisess:
         self.summary = pd.DataFrame({'preL': [], 'preR': [], 'posL': [], 'posR': [], 'pLeft': [], 'logOdds': []})
 
     def append(self,parserOutput):
+        ndxFree = np.logical_not(parserOutput.parsedData.Forced)
         ndxChoL = parserOutput.parsedData.ChoiceLeft
-        preL = parserOutput.parsedData.delayPre[ndxChoL].median()
-        posL = parserOutput.parsedData.delayPost[ndxChoL].median()
+        preL = parserOutput.parsedData.delayPre[np.logical_and(ndxChoL,ndxFree)].median()
+        posL = parserOutput.parsedData.delayPost[np.logical_and(ndxChoL,ndxFree)].median()
         ndxChoR = np.logical_not(ndxChoL)
-        preR = parserOutput.parsedData.delayPre[ndxChoR].median()
-        posR = parserOutput.parsedData.delayPost[ndxChoR].median()
-        pLeft = np.mean(parserOutput.parsedData.ChoiceLeft.values)
+        preR = parserOutput.parsedData.delayPre[np.logical_and(ndxChoR,ndxFree)].median()
+        posR = parserOutput.parsedData.delayPost[np.logical_and(ndxChoR,ndxFree)].median()
+        pLeft = np.mean(parserOutput.parsedData.ChoiceLeft[ndxFree].values)
         logOdds = np.log(pLeft/(1-pLeft))
         self.summary = self.summary.append({'preL': preL, 'preR': preR, 'posL': posL, 'posR': posR, 'pLeft': pLeft, 'logOdds': logOdds}, ignore_index=True)
