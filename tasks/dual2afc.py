@@ -41,57 +41,53 @@ class parser:
         MT = np.full(len(nTrials),np.nan)#<---
         ST = np.full(len(nTrials),np.nan)#<---
         """
-        for i in range(len(nTrials)) :
-            listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[i]
+        for iTrial in range(len(nTrials)) :
+            listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[iTrial]
 
             try:
-                stateTraj = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[i]-1] #from 1- to 0-based indexing
+                stateTraj = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]-1] #from 1- to 0-based indexing
             except Exception as e:
-                print(i)
-                print(type(i))
-                print([self.bpod['RawData'].item()['OriginalStateData'].item()[i]])
+                print(iTrial)
+                print(type(iTrial))
+                print([self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]])
 
-            Rewarded[i] = any([n.startswith('water_') for n in stateTraj])
-            if Rewarded[i] :
-                tsRwd[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()[stateTraj[[n.startswith('water_') for n in stateTraj]].item()].item()[0]
+            Rewarded[iTrial] = any([n.startswith('water_') for n in stateTraj])
+            if Rewarded[iTrial] :
+                tsRwd[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[[n.startswith('water_') for n in stateTraj]].item()].item()[0]
 
-            tsCin[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()['wait_Cin'].item()[1]
+            tsCin[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Cin'].item()[1]
 
             PortL = 'Port' + str(int(self.params.Ports_LMR))[0] + 'In'
-            if any([PortL in self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item().dtype.names]) :
-                tsPokeL[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item()[PortL].item()
+            if any([PortL in self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item().dtype.names]) :
+                tsPokeL[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[PortL].item()
 
             PortC = 'Port' + str(int(self.params.Ports_LMR))[1] + 'In'
-            if any([PortC in self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item().dtype.names]) :
-                tsPokeC[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item()[PortC].item()
+            if any([PortC in self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item().dtype.names]) :
+                tsPokeC[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[PortC].item()
 
             PortR = 'Port' + str(int(self.params.Ports_LMR))[2] + 'In'
-            if any([PortR in self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item().dtype.names]) :
-                tsPokeR[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item()[PortR].item()
+            if any([PortR in self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item().dtype.names]) :
+                tsPokeR[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[PortR].item()
 
-            ChoiceLeft[i] = any(['start_Lin' in stateTraj])
-            ChoiceRight[i] = any(['start_Rin' in stateTraj])
+            ChoiceLeft[iTrial] = any(['start_Lin' in stateTraj])
+            ChoiceRight[iTrial] = any(['start_Rin' in stateTraj])
 
-            FixBroke[i] = any(['broke_fixation' in stateTraj])
+            FixBroke[iTrial] = any(['broke_fixation' in stateTraj])
 
-            EarlyWithdrawal[i] = any(['early_withdrawal' in stateTraj])
+            EarlyWithdrawal[iTrial] = any(['early_withdrawal' in stateTraj])
 
 
-            #print(self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item().shape)
-            #print(self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item())
             if any([n.startswith('stimulus_delivery') for n in stateTraj]):
                 ndx = [next((j for j, x in enumerate([n.startswith('stimulus_delivery') for n in stateTraj]) if x), None)]
-                tsStimOn[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()[stateTraj[ndx].item()].item()[0]
-            #print(stateTraj[next((i for i, x in enumerate([n.startswith('stimulus_delivery') for n in stateTraj]) if x), None)])
-            #print(i, x, n)
+                tsStimOn[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[ndx].item()].item()[0]
 
             """
-            Forced[i] = any([n.startswith('forc_') for n in stateTraj])
-            tsChoice[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()[stateTraj[[n.startswith('Pre') for n in stateTraj]].item()].item()[0]
+            Forced[iTrial] = any([n.startswith('forc_') for n in stateTraj])
+            tsChoice[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[[n.startswith('Pre') for n in stateTraj]].item()].item()[0]
             ndxTone = np.logical_or(np.logical_or([n == 'Wait_Lin' for n in stateTraj],[n == 'Wait_Rin' for n in stateTraj]),[n.startswith('rewcue_') for n in stateTraj])
-            tsRwdTone[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()[stateTraj[ndxTone].item()].item()[0]
-            tsRwd[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()[stateTraj[[n.startswith('rewarded_') for n in stateTraj]].item()].item()[0]
-            delayPost[i] = np.diff(self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()[stateTraj[-1]].item())[0]
+            tsRwdTone[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[ndxTone].item()].item()[0]
+            tsRwd[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[[n.startswith('rewarded_') for n in stateTraj]].item()].item()[0]
+            delayPost[iTrial] = np.diff(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[-1]].item())[0]
         delayPre = tsRwdTone - tsChoice
 
         assert all(np.logical_xor(ChoiceRight,ChoiceLeft))
