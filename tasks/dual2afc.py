@@ -71,7 +71,12 @@ class parser:
                 tsPokeR[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[PortR].item()
 
             ChoiceLeft[iTrial] = any(['start_Lin' in stateTraj])
+            if ChoiceLeft[iTrial]:
+                tsChoice[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['start_Lin'].item()[0]
+
             ChoiceRight[iTrial] = any(['start_Rin' in stateTraj])
+            if ChoiceRight[iTrial]:
+                tsChoice[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['start_Rin'].item()[0]
 
             FixBroke[iTrial] = any(['broke_fixation' in stateTraj])
 
@@ -79,10 +84,15 @@ class parser:
 
             ChoiceMiss[iTrial] = any(['missed_choice' in stateTraj])
 
-
             if any([n.startswith('stimulus_delivery') for n in stateTraj]):
                 ndx = [next((j for j, x in enumerate([n.startswith('stimulus_delivery') for n in stateTraj]) if x), None)]
                 tsStimOn[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[ndx].item()].item()[0]
+
+            if any(['wait_Sin' in stateTraj]):
+                ndx = [next((j for j, x in enumerate([n.startswith('stimulus_delivery') for n in stateTraj]) if x), None)]
+                tsCout[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Sin'].item()[0]
+
+
 
             """
             Forced[iTrial] = any([n.startswith('forc_') for n in stateTraj])
@@ -97,7 +107,7 @@ class parser:
         """
         self.parsedData = pd.DataFrame({'nTrials': nTrials, 'ChoiceLeft': ChoiceLeft, 'ChoiceRight': ChoiceRight, 'ChoiceMiss': ChoiceMiss,
                                         'Rewarded': Rewarded, 'OdorFracA': OdorFracA[0:len(nTrials)], 'FixBroke': FixBroke, 'EarlyWithdrawal': EarlyWithdrawal,
-                                        'tsCin': tsCin, 'tsStimOn': tsStimOn, 'tsCout': tsCout, 'tsChoice': tsChoice, 'tsRwd': tsRwd,
+                                        'tsCin': tsCin, 'tsStimOn': tsStimOn, 'tsStimOff': tsCout, 'tsChoice': tsChoice, 'tsRwd': tsRwd,
                                         'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR, 'tsState0': tsState0})
 
 class dailyfig:
