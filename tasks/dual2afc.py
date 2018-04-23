@@ -17,27 +17,35 @@ class parser:
         ChoiceLeft = np.full(len(nTrials),False)
         ChoiceRight = np.full(len(nTrials),False)
         Rewarded = np.full(len(nTrials),False)
-        tsTrialStart = np.full(len(nTrials),np.nan)
-        tsChoice = np.full(len(nTrials),np.nan)
+        tsCin = np.full(len(nTrials),np.nan)
+        tsStimOn = np.full(len(nTrials),np.nan)#<---
+        tsCout = np.full(len(nTrials),np.nan)#<---
+        tsChoice = np.full(len(nTrials),np.nan)#<---
         tsRwd = np.full(len(nTrials),np.nan)
         tsPokeL = [[]]*len(nTrials)
         tsPokeC = [[]]*len(nTrials)
         tsPokeR = [[]]*len(nTrials)
-        """
-        ChoiceCorrect = np.full(len(nTrials),False)
-        Feedback = np.full(len(nTrials),False)
         FixBroke = np.full(len(nTrials),False)
         EarlyWithdrawal = np.full(len(nTrials),False)
-        FeedbackTime = np.full(len(nTrials),np.nan)
-        FixDur = np.full(len(nTrials),np.nan)
-        MT = np.full(len(nTrials),np.nan)
-        ST = np.full(len(nTrials),np.nan)
+
+        """
+
+        tsStimOff = np.full(len(nTrials),np.nan)#<---
+
+        ChoiceCorrect = np.full(len(nTrials),False)#<---
+        Feedback = np.full(len(nTrials),False)#<---
+
+
+        FeedbackTime = np.full(len(nTrials),np.nan)#<---
+        FixDur = np.full(len(nTrials),np.nan)#<---
+        MT = np.full(len(nTrials),np.nan)#<---
+        ST = np.full(len(nTrials),np.nan)#<---
         """
         for i in range(len(nTrials)) :
             listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[i]
 
             try:
-                stateTraj = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[i]-1]
+                stateTraj = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[i]-1] #from 1- to 0-based indexing
             except Exception as e:
                 print(i)
                 print(type(i))
@@ -46,18 +54,37 @@ class parser:
             Rewarded[i] = any([n.startswith('water_') for n in stateTraj])
             if Rewarded[i] :
                 tsRwd[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()[stateTraj[[n.startswith('water_') for n in stateTraj]].item()].item()[0]
-            tsTrialStart[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()['wait_Cin'].item()[1]
+
+            tsCin[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()['wait_Cin'].item()[1]
+
             PortL = 'Port' + str(int(self.params.Ports_LMR))[0] + 'In'
             if any([PortL in self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item().dtype.names]) :
                 tsPokeL[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item()[PortL].item()
+
             PortC = 'Port' + str(int(self.params.Ports_LMR))[1] + 'In'
             if any([PortC in self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item().dtype.names]) :
                 tsPokeC[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item()[PortC].item()
+
             PortR = 'Port' + str(int(self.params.Ports_LMR))[2] + 'In'
             if any([PortR in self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item().dtype.names]) :
                 tsPokeR[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['Events'].item()[PortR].item()
+
             ChoiceLeft[i] = any(['start_Lin' in stateTraj])
             ChoiceRight[i] = any(['start_Rin' in stateTraj])
+
+            FixBroke[i] = any(['broke_fixation' in stateTraj])
+
+            EarlyWithdrawal[i] = any(['early_withdrawal' in stateTraj])
+
+
+            #print(self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item().shape)
+            #print(self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item())
+            if any([n.startswith('stimulus_delivery') for n in stateTraj]):
+                ndx = [next((j for j, x in enumerate([n.startswith('stimulus_delivery') for n in stateTraj]) if x), None)]
+                tsStimOn[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()[stateTraj[ndx].item()].item()[0]
+            #print(stateTraj[next((i for i, x in enumerate([n.startswith('stimulus_delivery') for n in stateTraj]) if x), None)])
+            #print(i, x, n)
+
             """
             Forced[i] = any([n.startswith('forc_') for n in stateTraj])
             tsChoice[i] = self.bpod['RawEvents'].item()['Trial'].item()[i]['States'].item()[stateTraj[[n.startswith('Pre') for n in stateTraj]].item()].item()[0]
@@ -73,7 +100,7 @@ class parser:
 
         self.parsedData = pd.DataFrame({'nTrials': nTrials, 'ChoiceLeft': ChoiceLeft, 'ChoiceRight': ChoiceRight, 'ChoiceMiss': ChoiceMiss,
                                         'Rewarded': Rewarded, 'OdorFracA': OdorFracA[0:len(nTrials)],
-                                        'tsTrialStart': tsTrialStart, 'tsChoice': tsChoice, 'tsRwd': tsRwd,
+                                        'tsCin': tsCin, 'tsStimOn': tsStimOn, 'tsCout': tsCout, 'tsChoice': tsChoice, 'tsRwd': tsRwd,
                                         'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR, 'tsState0': tsState0})
 
 class dailyfig:
@@ -110,7 +137,7 @@ class dailyfig:
 
         hrCin = plt.subplot(346)
         hhCin = plt.subplot(3,4,10)
-        aliCin = data.tsTrialStart
+        aliCin = data.tsCin
         self.raspsth(data,aliCin,(hrCin,hhCin))
         hhCin.set_xlabel('Time (s) from Cin', fontsize=7)
 
