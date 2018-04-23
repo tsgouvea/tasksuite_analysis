@@ -16,9 +16,10 @@ class parser:
         OdorFracA = self.bpod['Custom'].item()['OdorFracA'].item()
         ChoiceLeft = np.full(len(nTrials),False)
         ChoiceRight = np.full(len(nTrials),False)
+        ChoiceMiss = np.full(len(nTrials),False)
         Rewarded = np.full(len(nTrials),False)
         tsCin = np.full(len(nTrials),np.nan)
-        tsStimOn = np.full(len(nTrials),np.nan)#<---
+        tsStimOn = np.full(len(nTrials),np.nan)
         tsCout = np.full(len(nTrials),np.nan)#<---
         tsChoice = np.full(len(nTrials),np.nan)#<---
         tsRwd = np.full(len(nTrials),np.nan)
@@ -76,6 +77,8 @@ class parser:
 
             EarlyWithdrawal[iTrial] = any(['early_withdrawal' in stateTraj])
 
+            ChoiceMiss[iTrial] = any(['missed_choice' in stateTraj])
+
 
             if any([n.startswith('stimulus_delivery') for n in stateTraj]):
                 ndx = [next((j for j, x in enumerate([n.startswith('stimulus_delivery') for n in stateTraj]) if x), None)]
@@ -92,10 +95,8 @@ class parser:
 
         assert all(np.logical_xor(ChoiceRight,ChoiceLeft))
         """
-        ChoiceMiss = np.logical_not(np.logical_or(ChoiceRight,ChoiceLeft))
-
         self.parsedData = pd.DataFrame({'nTrials': nTrials, 'ChoiceLeft': ChoiceLeft, 'ChoiceRight': ChoiceRight, 'ChoiceMiss': ChoiceMiss,
-                                        'Rewarded': Rewarded, 'OdorFracA': OdorFracA[0:len(nTrials)],
+                                        'Rewarded': Rewarded, 'OdorFracA': OdorFracA[0:len(nTrials)], 'FixBroke': FixBroke, 'EarlyWithdrawal': EarlyWithdrawal,
                                         'tsCin': tsCin, 'tsStimOn': tsStimOn, 'tsCout': tsCout, 'tsChoice': tsChoice, 'tsRwd': tsRwd,
                                         'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR, 'tsState0': tsState0})
 
