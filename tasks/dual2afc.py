@@ -17,26 +17,24 @@ class parser:
         ChoiceLeft = np.full(len(nTrials),False)
         ChoiceRight = np.full(len(nTrials),False)
         ChoiceMiss = np.full(len(nTrials),False)
+        Correct = np.full(len(nTrials),False)
         Rewarded = np.full(len(nTrials),False)
+        Incorr = np.full(len(nTrials),False)
         tsCin = np.full(len(nTrials),np.nan)
         tsStimOn = np.full(len(nTrials),np.nan)
-        tsCout = np.full(len(nTrials),np.nan)#<---
-        tsChoice = np.full(len(nTrials),np.nan)#<---
+        tsCout = np.full(len(nTrials),np.nan)
+        tsChoice = np.full(len(nTrials),np.nan)
         tsRwd = np.full(len(nTrials),np.nan)
+        tsErrTone = np.full(len(nTrials),np.nan)
         tsPokeL = [[]]*len(nTrials)
         tsPokeC = [[]]*len(nTrials)
         tsPokeR = [[]]*len(nTrials)
         FixBroke = np.full(len(nTrials),False)
         EarlyWithdrawal = np.full(len(nTrials),False)
+        AuditoryTrial = self.bpod['Custom'].item()['AuditoryTrial'].item().astype('bool')
 
         """
-
-        tsStimOff = np.full(len(nTrials),np.nan)#<---
-
-        ChoiceCorrect = np.full(len(nTrials),False)#<---
         Feedback = np.full(len(nTrials),False)#<---
-
-
         FeedbackTime = np.full(len(nTrials),np.nan)#<---
         FixDur = np.full(len(nTrials),np.nan)#<---
         MT = np.full(len(nTrials),np.nan)#<---
@@ -51,10 +49,6 @@ class parser:
                 print(iTrial)
                 print(type(iTrial))
                 print([self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]])
-
-            Rewarded[iTrial] = any([n.startswith('water_') for n in stateTraj])
-            if Rewarded[iTrial] :
-                tsRwd[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[[n.startswith('water_') for n in stateTraj]].item()].item()[0]
 
             tsCin[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Cin'].item()[1]
 
@@ -78,6 +72,8 @@ class parser:
             if ChoiceRight[iTrial]:
                 tsChoice[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['start_Rin'].item()[0]
 
+            Correct[iTrial] = ((OdorFracA[iTrial] < 50) & ChoiceRight[iTrial]) | ((OdorFracA[iTrial] > 50) & ChoiceLeft[iTrial])
+
             FixBroke[iTrial] = any(['broke_fixation' in stateTraj])
 
             EarlyWithdrawal[iTrial] = any(['early_withdrawal' in stateTraj])
@@ -92,22 +88,17 @@ class parser:
                 ndx = [next((j for j, x in enumerate([n.startswith('stimulus_delivery') for n in stateTraj]) if x), None)]
                 tsCout[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Sin'].item()[0]
 
+            Rewarded[iTrial] = any([n.startswith('water_') for n in stateTraj])
+            if Rewarded[iTrial] :
+                tsRwd[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[[n.startswith('water_') for n in stateTraj]].item()].item()[0]
 
+            Incorr[iTrial] = any(['timeOut_IncorrectChoice' in stateTraj])
+            if Incorr[iTrial] :
+                tsErrTone[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['timeOut_IncorrectChoice'].item()[0]
 
-            """
-            Forced[iTrial] = any([n.startswith('forc_') for n in stateTraj])
-            tsChoice[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[[n.startswith('Pre') for n in stateTraj]].item()].item()[0]
-            ndxTone = np.logical_or(np.logical_or([n == 'Wait_Lin' for n in stateTraj],[n == 'Wait_Rin' for n in stateTraj]),[n.startswith('rewcue_') for n in stateTraj])
-            tsRwdTone[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[ndxTone].item()].item()[0]
-            tsRwd[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[[n.startswith('rewarded_') for n in stateTraj]].item()].item()[0]
-            delayPost[iTrial] = np.diff(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[-1]].item())[0]
-        delayPre = tsRwdTone - tsChoice
-
-        assert all(np.logical_xor(ChoiceRight,ChoiceLeft))
-        """
-        self.parsedData = pd.DataFrame({'nTrials': nTrials, 'ChoiceLeft': ChoiceLeft, 'ChoiceRight': ChoiceRight, 'ChoiceMiss': ChoiceMiss,
-                                        'Rewarded': Rewarded, 'OdorFracA': OdorFracA[0:len(nTrials)], 'FixBroke': FixBroke, 'EarlyWithdrawal': EarlyWithdrawal,
-                                        'tsCin': tsCin, 'tsStimOn': tsStimOn, 'tsStimOff': tsCout, 'tsChoice': tsChoice, 'tsRwd': tsRwd,
+        self.parsedData = pd.DataFrame({'nTrials': nTrials, 'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss, 'isOlf': np.logical_not(AuditoryTrial[0:len(nTrials)]),
+                                        'isRewarded': Rewarded, 'OdorFracA': OdorFracA[0:len(nTrials)], 'isBrokeFix': FixBroke, 'isEarlyWithdr': EarlyWithdrawal, 'isIncorr': Incorr, 'isCorrect': Correct,
+                                        'tsCin': tsCin, 'tsStimOn': tsStimOn, 'tsStimOff': tsCout, 'tsChoice': tsChoice, 'tsRwd': tsRwd, 'tsErrTone': tsErrTone,
                                         'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR, 'tsState0': tsState0})
 
 class dailyfig:
