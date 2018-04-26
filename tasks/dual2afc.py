@@ -42,13 +42,7 @@ class parser:
         """
         for iTrial in range(len(nTrials)) :
             listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[iTrial]
-
-            try:
                 stateTraj = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]-1] #from 1- to 0-based indexing
-            except Exception as e:
-                print(iTrial)
-                print(type(iTrial))
-                print([self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]])
 
             tsCin[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Cin'].item()[1]
 
