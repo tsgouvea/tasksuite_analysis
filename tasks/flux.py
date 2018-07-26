@@ -75,6 +75,27 @@ class parseSess:
             element, index = min(list(zip(a, range(len(a)))))
             dfPokes.iloc[index,dfPokes.columns.get_loc('isRwded')]=True
 
+        dfPokes['tinceR'] = np.nan
+        dfPokes['tinceC'] = np.nan
+
+        dfPokes['tinceR0'] = np.nan
+        dfPokes['tinceR1'] = np.nan
+        dfPokes['tinceR2'] = np.nan
+
+        for row in np.arange(len(dfPokes))[dfPokes['isSwitch'].values]:
+            ndxC = np.logical_and(dfPokes['arm']==dfPokes.iloc[row,dfPokes.columns.get_loc('arm')],dfPokes['tsPoke']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
+            dfPokes.iloc[row,dfPokes.columns.get_loc('tinceC')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfPokes['tsPoke'][ndxC].max()
+
+            ndxR = np.logical_and(dfRwd['arm']==dfPokes.iloc[row,dfPokes.columns.get_loc('arm')],dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
+            dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR].max()
+
+            ndxR0 = np.logical_and(dfRwd['arm']==0,dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
+            dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR0')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR0].max()
+            ndxR1 = np.logical_and(dfRwd['arm']==1,dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
+            dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR1')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR1].max()
+            ndxR2 = np.logical_and(dfRwd['arm']==2,dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
+            dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR2')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR2].max()
+
         self.dfSetup = dfSetup
         self.dfPokes = dfPokes
         self.dfRwd = dfRwd
@@ -112,7 +133,7 @@ class parseSess:
         plt.suptitle(self.fname)
         plt.tight_layout()
 
-    def tince(self): # creates dataframe with Time sINCE last reward at moment of each ('isSwitch') response
+    def tince(self): # creates dataframe with Time sINCE last reward/response at moment of each ('isSwitch') response
         dfTince = pd.DataFrame({'arm':self.dfPokes['arm'][self.dfPokes['isSwitch']].values, 'ts':self.dfPokes['tsPoke'][self.dfPokes['isSwitch']].values,
                      'sinceA':np.nan,'sinceB':np.nan,'sinceC':np.nan})
 
@@ -125,4 +146,4 @@ class parseSess:
             for iResp in range(len(dfTince)):
                 if any(tsRwd < dfTince['ts'].iloc[iResp]):
                     dfTince['since' + 'ABC'[iArm]][iResp] = dfTince['ts'].iloc[iResp] - max(tsRwd[tsRwd < dfTince['ts'].iloc[iResp]])
-        self.dfTince = dfTince
+        self.dfTinceR = dfTince

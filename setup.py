@@ -10,7 +10,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='tasksuite',
-    version='0.0.dev1',
+    version='0.0.dev2',
     description='Analyses data of Bpod behavioral tasks',
     long_description_content_type='text/markdown',
     url='https://bitbucket.org/tsgouvea/tasksuite/',
