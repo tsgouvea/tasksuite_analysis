@@ -26,17 +26,17 @@ class parseSess:
         nArms = len(str(self.bpod['Settings'].item()['GUI'].item()['Ports_ABC'].item()))
         nTrials = np.arange(np.asscalar(self.bpod['nTrials']))+1
         tsTrialStart = self.bpod['TrialStartTimestamp'].item()
-        tsTrialStart = tsTrialStart - tsTrialStart[0]
+        tsTrialStart = tsTrialStart-tsTrialStart[0] if not np.isscalar(tsTrialStart) else 0
 
         dfSetup = pd.DataFrame({'tsSetup': [], 'arm': [], 'iTrial': []})
         dfPokes = pd.DataFrame({'tsPoke': [], 'arm': [], 'iTrial': []})
         dfRwd = pd.DataFrame({'tsRwd': [], 'arm': [], 'iTrial': []})
 
-        for iTrial in range(len(nTrials)):
+        for iTrial in range(1,len(nTrials)):
             listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[iTrial]
             stateTraj = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]-1]
             events = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()
-
+        
             for iArm in range(nArms):
                 if any(['GlobalTimer' + str(iArm+1) + '_End' in events.dtype.names]) :
                     x = tsTrialStart[iTrial] + events['GlobalTimer' + str(iArm+1) + '_End'].item()
@@ -70,31 +70,42 @@ class parseSess:
         dfRwd = dfRwd.sort_values('tsRwd')
 
         dfPokes['isRwded'] = np.full(len(dfPokes),False)
-        for iRew in range(len(dfRwd)):
-            a = abs(dfPokes['tsPoke']-dfRwd.iloc[iRew,dfRwd.columns.get_loc('tsRwd')])
-            element, index = min(list(zip(a, range(len(a)))))
-            dfPokes.iloc[index,dfPokes.columns.get_loc('isRwded')]=True
 
-        dfPokes['tinceR'] = np.nan
-        dfPokes['tinceC'] = np.nan
+        for iTrial in dfRwd.index:
+            ndx=np.isclose(dfRwd.loc[iTrial].tsRwd,dfPokes.tsPoke)
+            ndx=np.logical_and(ndx,dfRwd.loc[iTrial].arm==dfPokes.arm)
+            ndx=np.logical_and(ndx,dfPokes.index==iTrial)
+            try:
+                assert(sum(ndx)==1)
+                dfPokes.loc[ndx,'isRwded']=True
+            except:
+                dfPokes.loc[ndx,'isRwded']=np.nan
 
-        dfPokes['tinceR0'] = np.nan
-        dfPokes['tinceR1'] = np.nan
-        dfPokes['tinceR2'] = np.nan
+        # for iRew in range(len(dfRwd)):
+        #     a = abs(dfPokes['tsPoke']-dfRwd.iloc[iRew,dfRwd.columns.get_loc('tsRwd')])
+        #     element, index = min(list(zip(a, range(len(a)))))
+        #     dfPokes.iloc[index,dfPokes.columns.get_loc('isRwded')]=True
 
-        for row in np.arange(len(dfPokes))[dfPokes['isSwitch'].values]:
-            ndxC = np.logical_and(dfPokes['arm']==dfPokes.iloc[row,dfPokes.columns.get_loc('arm')],dfPokes['tsPoke']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
-            dfPokes.iloc[row,dfPokes.columns.get_loc('tinceC')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfPokes['tsPoke'][ndxC].max()
-
-            ndxR = np.logical_and(dfRwd['arm']==dfPokes.iloc[row,dfPokes.columns.get_loc('arm')],dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
-            dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR].max()
-
-            ndxR0 = np.logical_and(dfRwd['arm']==0,dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
-            dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR0')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR0].max()
-            ndxR1 = np.logical_and(dfRwd['arm']==1,dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
-            dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR1')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR1].max()
-            ndxR2 = np.logical_and(dfRwd['arm']==2,dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
-            dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR2')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR2].max()
+        # dfPokes['tinceR'] = np.nan
+        # dfPokes['tinceC'] = np.nan
+        #
+        # dfPokes['tinceR0'] = np.nan
+        # dfPokes['tinceR1'] = np.nan
+        # dfPokes['tinceR2'] = np.nan
+        #
+        # for row in np.arange(len(dfPokes))[dfPokes['isSwitch'].values]:
+        #     ndxC = np.logical_and(dfPokes['arm']==dfPokes.iloc[row,dfPokes.columns.get_loc('arm')],dfPokes['tsPoke']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
+        #     dfPokes.iloc[row,dfPokes.columns.get_loc('tinceC')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfPokes['tsPoke'][ndxC].max()
+        #
+        #     ndxR = np.logical_and(dfRwd['arm']==dfPokes.iloc[row,dfPokes.columns.get_loc('arm')],dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
+        #     dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR].max()
+        #
+        #     ndxR0 = np.logical_and(dfRwd['arm']==0,dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
+        #     dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR0')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR0].max()
+        #     ndxR1 = np.logical_and(dfRwd['arm']==1,dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
+        #     dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR1')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR1].max()
+        #     ndxR2 = np.logical_and(dfRwd['arm']==2,dfRwd['tsRwd']<dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')])
+        #     dfPokes.iloc[row,dfPokes.columns.get_loc('tinceR2')] =  dfPokes.iloc[row,dfPokes.columns.get_loc('tsPoke')] - dfRwd['tsRwd'][ndxR2].max()
 
         self.dfSetup = dfSetup
         self.dfPokes = dfPokes
