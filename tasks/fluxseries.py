@@ -62,9 +62,9 @@ class parseSess:
         dfRwd['rwdNext']=np.nan
         for iArm in list(set(dfRwd.arm)):
             iArm=int(iArm)
-            indxArm=np.arange(len(dfRwd))[dfRwd.arm==iArm]
+            indxArm=np.arange(len(dfRwd))[np.array(dfRwd.arm==iArm)]
             ratio=self.params.rewLast/self.params.rewFirst
-            den=self.params['rewN_' + 'ABC'[iArm]]
+            den=self.params['rewN_' + 'ABC'[iArm]]-1
             dfRwd.iloc[indxArm,dfRwd.columns.get_loc('rwdNext')]=np.ceil(ratio**(dfRwd.iloc[indxArm].n.values/den)*self.params.rewFirst)
             dfRwd.iloc[indxArm,dfRwd.columns.get_loc('rwdLast')]=np.ceil(ratio**((dfRwd.iloc[indxArm].n.values-1)/den)*self.params.rewFirst)
 
