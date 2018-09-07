@@ -171,7 +171,7 @@ class parseSess:
         for iArm in list(set(dfLeav.arm)):
             iArm=int(iArm)
             df=self.dfRwd[self.dfRwd.arm==iArm]
-            df['tsRwd']=df.tsRwd-self.dfRwd.tsRwd.iloc[0]
+            # df['tsRwd']=df.tsRwd-self.dfRwd.tsRwd.iloc[0]
             ha[0,2].plot(df.tsRwd/60,np.cumsum(df.rwdLast)/1000,c=colors[iArm],lw=lw)
             ha[1,2].scatter(df.tsRwd/60,df.rwdLast,c=colors[iArm],alpha=.25)
         ha[0,2].plot(self.dfRwd.tsRwd/60,np.cumsum(self.dfRwd.rwdLast)/1000,c='xkcd:black',lw=lw)
