@@ -11,9 +11,14 @@ import numpy as np
 import tasks as suite
 import matplotlib.pyplot as plt
 
-# path=os.path.join(os.sep,'Users','thiago','Programs','BpodUser','Data')
-# path='C:\Users\Thiago\BpodUser\Data'
-path = os.path.join('C:', os.sep, 'Users','Thiago','BpodUser','Data')
+mypath=os.path.expanduser("~")
+for (dirpath, dirnames, filenames) in os.walk(mypath):
+    if dirpath.count(os.sep) - mypath.count(os.sep) > 2:
+        continue
+    if 'BpodUser' in dirnames:
+        break
+
+path = os.path.join(dirpath,'BpodUser','Data')
 
 dictasks = {'Flux':'flux','FluxSeries':'fluxseries'}
 
