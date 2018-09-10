@@ -1,4 +1,5 @@
 import os
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -78,10 +79,10 @@ class parseSess:
             ndx=np.logical_and(ndx,dfRwd.loc[iTrial].arm==dfPokes.arm)
             ndx=np.logical_and(ndx,dfPokes.index==iTrial)
             try:
-                assert(sum(ndx)==1)
-                dfPokes.loc[ndx,'isRwded']=True
+                assert(sum(ndx)>=1)
+                dfPokes.iloc[np.arange(len(ndx))[ndx][0],dfPokes.columns.get_loc('isRwded')]=True
             except:
-                dfPokes.loc[ndx,'isRwded']=np.nan
+                warnings.warn('Reward could not be assigned to poke response. Trial #%d of session %s' % (iTrial,self.fname))
 
         # for iRew in range(len(dfRwd)):
         #     a = abs(dfPokes['tsPoke']-dfRwd.iloc[iRew,dfRwd.columns.get_loc('tsRwd')])
@@ -170,7 +171,7 @@ class parseSess:
             assert(arm.iloc[ndxSwi[i+1]-1]==arm.iloc[ndxSwi[i]])
             dicLing['armNo'].append(arm.iloc[ndxSwi[i]])
             dicLing['lingert'].append(tsPoke.iloc[ndxSwi[i+1]-1]-tsPoke.iloc[ndxSwi[i]])
-            dicLing['nRew'].append(self.dfPokes['isRwded'].iloc[ndxSwi[i]:ndxSwi[i+1]].sum())
+            dicLing['nRew'].append(self.dfPokes['isRwded'].iloc[ndxSwi[i]:ndxSwi[i+1]].astype(int).sum())
             dicLing['iTrial'].append(self.dfPokes.index[ndxSwi[i]])
 
         dfLing = pd.DataFrame(dicLing)
@@ -192,12 +193,13 @@ class parseSess:
         lw=2
         facealpha=.2
         hf, ha = plt.subplots(2,3,figsize=(10,6))
-
+        bins = np.arange(np.percentile(dfInt['interval'],99))
         for iArm in set(dfInt['armNo']):
             dfInt_arm=dfInt[dfInt['armNo']==iArm]
             x=dfInt_arm.interval
-            ha[0,0].hist(x,bins=np.linspace(0,np.percentile(dfInt['interval'],99),21),cumulative=False,density=False,histtype='step',color=colors[iArm],lw=lw)
-            ha[0,0].hist(x,bins=np.linspace(0,np.percentile(dfInt['interval'],99),21),cumulative=False,density=False,histtype='stepfilled',alpha=facealpha,color=colors[iArm],edgecolor='None')
+            x=np.clip(x,0,bins.max())
+            ha[0,0].hist(x,bins=bins,cumulative=False,density=False,histtype='step',color=colors[iArm],lw=lw)
+            ha[0,0].hist(x,bins=bins,cumulative=False,density=False,histtype='stepfilled',alpha=facealpha,color=colors[iArm],edgecolor='None')
 
         ha[0,0].set_ylabel('Counts',fontsize=fs_lab)
         ha[0,0].set_xlabel('Reward availability time (s)',fontsize=fs_lab)
@@ -225,17 +227,16 @@ class parseSess:
 
         ## Panel C - visit duration histogram
 
+        bins=np.arange(np.percentile(dfLing['lingert'],99))
+
         for iArm in set(dfLing['armNo']):
 
             dfLing_arm=dfLing[dfLing['armNo']==iArm]
             x=dfLing_arm.lingert
+            x=np.clip(x,0,bins.max())
 
-        #     ha[0,0].hist(x,bins=np.linspace(dfInt['interval'].min(),np.percentile(dfInt['interval'],99),51),cumulative=False,density=False,histtype='step',color=colors[iArm],lw=lw)
-        #     ha[0,0].hist(x,bins=np.linspace(dfInt['interval'].min(),np.percentile(dfInt['interval'],99),51),cumulative=False,density=False,histtype='stepfilled',alpha=facealpha,color=colors[iArm],lw=lw)
-        #     ,bins=np.linspace(dfLing['lingert'].min(),np.percentile(dfLing['lingert'],99),101)
-
-            ha[0,1].hist(x,bins=np.arange(np.percentile(dfLing['lingert'],99)),cumulative=False,density=False,histtype='step',color=colors[iArm],lw=2)
-            ha[0,1].hist(x,bins=np.arange(np.percentile(dfLing['lingert'],99)),cumulative=False,density=False,histtype='stepfilled',alpha=facealpha,color=colors[iArm],edgecolor='None')
+            ha[0,1].hist(x,bins=bins,cumulative=False,density=False,histtype='step',color=colors[iArm],lw=2)
+            ha[0,1].hist(x,bins=bins,cumulative=False,density=False,histtype='stepfilled',alpha=facealpha,color=colors[iArm],edgecolor='None')
 
         ha[0,1].set_xlabel('Visit duration (s)',fontsize=fs_lab)
         ha[0,1].set_ylabel('Counts',fontsize=fs_lab)
