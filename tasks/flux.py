@@ -205,7 +205,6 @@ class parseSess:
         ha[0,0].set_xlabel('Reward availability time (s)',fontsize=fs_lab)
 
         ## Panel B - P($Rwd \mid $ response time)
-
         for iArm in set(dfTince['armNo']):
             ndx = dfTince['armNo']==iArm
             x=dfTince[ndx]['tinceR']
@@ -213,10 +212,10 @@ class parseSess:
         #     x=1-np.exp(-1*lambdas[listArmJ[0]]*x)
 
             ndx=np.digitize(x,np.percentile(x,np.linspace(0,100,11)))
-            x = [x[ndx == i].mean() for i in range(1, len(set(ndx)))]
-            y = [y[ndx == i].mean() for i in range(1, len(set(ndx)))]
+            x = np.array([x[ndx == i].mean() for i in range(1, len(set(ndx)))])
+            y = np.array([y[ndx == i].mean() for i in range(1, len(set(ndx)))])
 
-            y_hat = 1-np.exp(float(self.params['Mean' + 'ABC'[iArm]])**-1*np.array(x)*-1) if self.params.VI else x > self.params['Mean' + 'ABC'[iArm]]
+            y_hat = np.ravel(1-np.exp(float(self.params['Mean' + 'ABC'[iArm]])**-1*np.array(x)*-1) if self.params.VI else np.array([x > self.params['Mean' + 'ABC'[iArm]]]))
 
             ha[1,0].scatter(x,y,c=colors[iArm])
             ha[1,0].plot(x,y,c=colors[iArm])

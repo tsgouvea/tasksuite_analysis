@@ -11,36 +11,36 @@ class parser:
         self.parse()
 
     def parse(self):
-        nTrials = np.arange(np.asscalar(self.bpod['nTrials']))+1
+        nTrials = self.bpod['nTrials'].item()
         tsState0 = self.bpod['TrialStartTimestamp'].item()
         OdorFracA = self.bpod['Custom'].item()['OdorFracA'].item()
-        ChoiceLeft = np.full(len(nTrials),False)
-        ChoiceRight = np.full(len(nTrials),False)
-        ChoiceMiss = np.full(len(nTrials),False)
-        Correct = np.full(len(nTrials),False)
-        Rewarded = np.full(len(nTrials),False)
-        Incorr = np.full(len(nTrials),False)
-        tsCin = np.full(len(nTrials),np.nan)
-        tsStimOn = np.full(len(nTrials),np.nan)
-        tsCout = np.full(len(nTrials),np.nan)
-        tsChoice = np.full(len(nTrials),np.nan)
-        tsRwd = np.full(len(nTrials),np.nan)
-        tsErrTone = np.full(len(nTrials),np.nan)
-        tsPokeL = [[]]*len(nTrials)
-        tsPokeC = [[]]*len(nTrials)
-        tsPokeR = [[]]*len(nTrials)
-        FixBroke = np.full(len(nTrials),False)
-        EarlyWithdrawal = np.full(len(nTrials),False)
+        ChoiceLeft = np.full(nTrials,False)
+        ChoiceRight = np.full(nTrials,False)
+        ChoiceMiss = np.full(nTrials,False)
+        Correct = np.full(nTrials,False)
+        Rewarded = np.full(nTrials,False)
+        Incorr = np.full(nTrials,False)
+        tsCin = np.full(nTrials,np.nan)
+        tsStimOn = np.full(nTrials,np.nan)
+        tsCout = np.full(nTrials,np.nan)
+        tsChoice = np.full(nTrials,np.nan)
+        tsRwd = np.full(nTrials,np.nan)
+        tsErrTone = np.full(nTrials,np.nan)
+        tsPokeL = [[]]*nTrials
+        tsPokeC = [[]]*nTrials
+        tsPokeR = [[]]*nTrials
+        FixBroke = np.full(nTrials,False)
+        EarlyWithdrawal = np.full(nTrials,False)
         AuditoryTrial = self.bpod['Custom'].item()['AuditoryTrial'].item().astype('bool')
 
         """
-        Feedback = np.full(len(nTrials),False)#<---
-        FeedbackTime = np.full(len(nTrials),np.nan)#<---
-        FixDur = np.full(len(nTrials),np.nan)#<---
-        MT = np.full(len(nTrials),np.nan)#<---
-        ST = np.full(len(nTrials),np.nan)#<---
+        Feedback = np.full(nTrials,False)#<---
+        FeedbackTime = np.full(nTrials,np.nan)#<---
+        FixDur = np.full(nTrials,np.nan)#<---
+        MT = np.full(nTrials,np.nan)#<---
+        ST = np.full(nTrials,np.nan)#<---
         """
-        for iTrial in range(len(nTrials)) :
+        for iTrial in range(nTrials) :
             listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[iTrial]
             stateTraj = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]-1] #from 1- to 0-based indexing
 
@@ -90,8 +90,8 @@ class parser:
             if Incorr[iTrial] :
                 tsErrTone[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['timeOut_IncorrectChoice'].item()[0]
 
-        self.parsedData = pd.DataFrame({'nTrials': nTrials, 'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss, 'isOlf': np.logical_not(AuditoryTrial[0:len(nTrials)]),
-                                        'isRewarded': Rewarded, 'OdorFracA': OdorFracA[0:len(nTrials)], 'isBrokeFix': FixBroke, 'isEarlyWithdr': EarlyWithdrawal, 'isIncorr': Incorr, 'isCorrect': Correct,
+        self.parsedData = pd.DataFrame({'nTrials': np.arange(nTrials), 'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss, 'isOlf': np.logical_not(AuditoryTrial[0:nTrials]),
+                                        'isRewarded': Rewarded, 'OdorFracA': OdorFracA[0:nTrials], 'isBrokeFix': FixBroke, 'isEarlyWithdr': EarlyWithdrawal, 'isIncorr': Incorr, 'isCorrect': Correct,
                                         'tsCin': tsCin, 'tsStimOn': tsStimOn, 'tsStimOff': tsCout, 'tsChoice': tsChoice, 'tsRwd': tsRwd, 'tsErrTone': tsErrTone,
                                         'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR, 'tsState0': tsState0})
 
