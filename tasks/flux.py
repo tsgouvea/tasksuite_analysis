@@ -11,7 +11,7 @@ class parseSess:
 
     def __init__(self,filepath):
         if not os.path.exists(filepath):
-            print('File not found: ' + bfilepath)
+            print('File not found: ' + filepath)
             raise OSError(filepath)
         mysess = sio.loadmat(filepath, squeeze_me=True)
         self.fname = os.path.split(filepath)[1]
@@ -266,11 +266,13 @@ class parseSess:
             n=np.unique(dfArm_all.n.values)
 
             y=np.full(n.shape,np.nan)
+            markerSize=np.full(n.shape,np.nan)
 
             for iRew in range(len(n)):
                 y[iRew] = np.sum(dfArm_lea.n==n[iRew]) / np.sum(dfArm_all.n==n[iRew])
+                markerSize[iRew] = np.sum(dfArm_all.n==n[iRew])
 
-            ha[0,2].scatter(n,y,c=colors[iArm])
+            ha[0,2].scatter(n,y,c=colors[iArm],s=markerSize)
             ha[0,2].plot(n,y,c=colors[iArm],alpha=.5)
 
         ha[0,2].set_ylabel("Hazard rate of leaving",fontsize=fs_lab)
@@ -306,5 +308,6 @@ class parseSess:
             tsRwd = self.dfRwd['tsRwd'][self.dfRwd['arm']==iArm]
             for iResp in range(len(dfTince)):
                 if any(tsRwd < dfTince['ts'].iloc[iResp]):
-                    dfTince['since' + 'ABC'[iArm]][iResp] = dfTince['ts'].iloc[iResp] - max(tsRwd[tsRwd < dfTince['ts'].iloc[iResp]])
+                    iCol=dfTince.columns.get_loc('since'+'ABC'[iArm])
+                    dfTince.iloc[iResp,iCol] = dfTince['ts'].iloc[iResp] - max(tsRwd[tsRwd < dfTince['ts'].iloc[iResp]])
         self.dfTinceR = dfTince

@@ -1,13 +1,26 @@
+import os
+import warnings
+
 import numpy as np
 import pandas as pd
+import scipy.io as sio
 import matplotlib as mp
 import matplotlib.pyplot as plt
 
-class parser:
+class parseSess:
 
-    def __init__(self,struct):
-        self.bpod = struct['SessionData']
-        self.params = pd.Series({n: np.asscalar(self.bpod['Settings'].item()['GUI'].item()[n]) for n in self.bpod['Settings'].item()['GUI'].item().dtype.names})
+    def __init__(self,filepath):
+        if not os.path.exists(filepath):
+            print('File not found: ' + filepath)
+            raise OSError(filepath)
+        mysess = sio.loadmat(filepath, squeeze_me=True)
+        self.fname = os.path.split(filepath)[1]
+        self.bpod = mysess['SessionData']
+        try:
+            self.params = pd.Series({n: np.asscalar(self.bpod['Settings'].item()['GUI'].item()[n]) for n in self.bpod['Settings'].item()['GUI'].item().dtype.names})
+        except Exception as e:
+            print('Couldn\'t load session parameters')
+
         self.parse()
 
     def parse(self):
@@ -20,6 +33,7 @@ class parser:
         Correct = np.full(nTrials,False)
         Rewarded = np.full(nTrials,False)
         Incorr = np.full(nTrials,False)
+        SkippedFeedback = np.full(nTrials,False)
         tsCin = np.full(nTrials,np.nan)
         tsStimOn = np.full(nTrials,np.nan)
         tsCout = np.full(nTrials,np.nan)
@@ -32,6 +46,8 @@ class parser:
         FixBroke = np.full(nTrials,False)
         EarlyWithdrawal = np.full(nTrials,False)
         AuditoryTrial = self.bpod['Custom'].item()['AuditoryTrial'].item().astype('bool')
+        rewMag = np.empty(nTrials,dtype='<U5')
+        rewBias = np.empty(nTrials,dtype='<U3')
 
         """
         Feedback = np.full(nTrials,False)#<---
@@ -74,6 +90,8 @@ class parser:
 
             ChoiceMiss[iTrial] = any(['missed_choice' in stateTraj])
 
+            SkippedFeedback[iTrial] = any(['skipped_feedback' in stateTraj])
+
             if any([n.startswith('stimulus_delivery') for n in stateTraj]):
                 ndx = [next((j for j, x in enumerate([n.startswith('stimulus_delivery') for n in stateTraj]) if x), None)]
                 tsStimOn[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[ndx].item()].item()[0]
@@ -90,10 +108,15 @@ class parser:
             if Incorr[iTrial] :
                 tsErrTone[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['timeOut_IncorrectChoice'].item()[0]
 
-        self.parsedData = pd.DataFrame({'nTrials': np.arange(nTrials), 'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss, 'isOlf': np.logical_not(AuditoryTrial[0:nTrials]),
-                                        'isRewarded': Rewarded, 'OdorFracA': OdorFracA[0:nTrials], 'isBrokeFix': FixBroke, 'isEarlyWithdr': EarlyWithdrawal, 'isIncorr': Incorr, 'isCorrect': Correct,
+            temp = self.bpod['Custom'].item()['RewardMagnitude'].item()[iTrial]
+            rewMag[iTrial] = '{:0>2}/{:0>2}'.format(temp[0],temp[1])
+            rewBias[iTrial] = 'CON' if temp[0]==temp[1] else 'LEF' if temp[0]>temp[1] else 'RIG'
+
+        self.parsedData = pd.DataFrame({'nTrials': np.arange(nTrials), 'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss, 'isSkipFeedback': SkippedFeedback,
+                                        'isOlf': np.logical_not(AuditoryTrial[0:nTrials]), 'isRewarded': Rewarded, 'OdorFracA': OdorFracA[0:nTrials], 'isBrokeFix': FixBroke,
+                                        'isEarlyWithdr': EarlyWithdrawal, 'isIncorr': Incorr, 'isCorrect': Correct,
                                         'tsCin': tsCin, 'tsStimOn': tsStimOn, 'tsStimOff': tsCout, 'tsChoice': tsChoice, 'tsRwd': tsRwd, 'tsErrTone': tsErrTone,
-                                        'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR, 'tsState0': tsState0})
+                                        'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR, 'tsState0': tsState0, 'rewMag': rewMag, 'rewBias': rewBias})
 
 class dailyfig:
 
