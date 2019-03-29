@@ -25,18 +25,18 @@ class parseSess:
 
     def parse(self):
         nArms = len(str(self.bpod['Settings'].item()['GUI'].item()['Ports_ABC'].item()))
-        nTrials = np.arange(np.asscalar(self.bpod['nTrials']))+1
+        nTrials = np.asscalar(self.bpod['nTrials'])
         tsTrialStart = self.bpod['TrialStartTimestamp'].item()
-        tsTrialStart = tsTrialStart-tsTrialStart[0] if not np.isscalar(tsTrialStart) else 0
+        tsTrialStart = tsTrialStart-tsTrialStart[0] if not np.isscalar(tsTrialStart) else np.array([0])
 
         dfSetup = pd.DataFrame({'tsSetup': [], 'arm': [], 'iTrial': []})
         dfPokes = pd.DataFrame({'tsPoke': [], 'arm': [], 'iTrial': []})
         dfRwd = pd.DataFrame({'tsRwd': [], 'arm': [], 'iTrial': [], 'n': []})
 
-        for iTrial in range(len(nTrials)):
-            listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[iTrial]
-            stateTraj = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]-1]
-            events = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()
+        for iTrial in range(nTrials):
+            listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[iTrial] if nTrials > 1 else self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()
+            stateTraj = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]-1] if nTrials > 1 else listStates[self.bpod['RawData'].item()['OriginalStateData'].item()-1]
+            events = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item() if nTrials > 1 else self.bpod['RawEvents'].item()['Trial'].item()['Events'].item()
 
             for iArm in range(nArms):
                 if any(['GlobalTimer' + str(iArm+1) + '_End' in events.dtype.names]) :
@@ -50,7 +50,8 @@ class parseSess:
                     dfPokes = dfPokes.append(pd.DataFrame({'tsPoke': x, 'arm': int(iArm), 'iTrial': int(iTrial)}))
 
                 if any(['water_' + 'ABC'[iArm] in stateTraj]) :
-                    x = tsTrialStart[iTrial] + self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['water_' + 'ABC'[iArm]].item()[0]
+                    x = tsTrialStart[iTrial] + self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['water_' + 'ABC'[iArm]].item()[0] if nTrials > 1 else tsTrialStart[iTrial] + self.bpod['RawEvents'].item()['Trial'].item()['States'].item()['water_' + 'ABC'[iArm]].item()[0]
+
                     n = dfRwd['n'].iloc[-1]+1 if sum(dfRwd['arm']==int(iArm))>0 and dfRwd['arm'].iloc[-1]==int(iArm) else 1
                     if x.size == 1: x = [x]
                     dfRwd = dfRwd.append(pd.DataFrame({'tsRwd': x, 'arm': int(iArm), 'iTrial': int(iTrial), 'n': n}))
@@ -193,13 +194,14 @@ class parseSess:
         lw=2
         facealpha=.2
         hf, ha = plt.subplots(2,3,figsize=(10,6))
-        bins = np.arange(np.percentile(dfInt['interval'],99))
-        for iArm in set(dfInt['armNo']):
-            dfInt_arm=dfInt[dfInt['armNo']==iArm]
-            x=dfInt_arm.interval
-            x=np.clip(x,0,bins.max())
-            ha[0,0].hist(x,bins=bins,cumulative=False,density=False,histtype='step',color=colors[iArm],lw=lw)
-            ha[0,0].hist(x,bins=bins,cumulative=False,density=False,histtype='stepfilled',alpha=facealpha,color=colors[iArm],edgecolor='None')
+        if not dfInt.empty:
+            bins = np.arange(np.percentile(dfInt['interval'],99))
+            for iArm in set(dfInt['armNo']):
+                dfInt_arm=dfInt[dfInt['armNo']==iArm]
+                x=dfInt_arm.interval
+                x=np.clip(x,0,bins.max())
+                ha[0,0].hist(x,bins=bins,cumulative=False,density=False,histtype='step',color=colors[iArm],lw=lw)
+                ha[0,0].hist(x,bins=bins,cumulative=False,density=False,histtype='stepfilled',alpha=facealpha,color=colors[iArm],edgecolor='None')
 
         ha[0,0].set_ylabel('Counts',fontsize=fs_lab)
         ha[0,0].set_xlabel('Reward availability time (s)',fontsize=fs_lab)
@@ -226,16 +228,17 @@ class parseSess:
 
         ## Panel C - visit duration histogram
 
-        bins=np.arange(np.percentile(dfLing['lingert'],99))
+        if not dfLing.empty:
+            bins=np.arange(np.percentile(dfLing['lingert'],99))
 
-        for iArm in set(dfLing['armNo']):
+            for iArm in set(dfLing['armNo']):
 
-            dfLing_arm=dfLing[dfLing['armNo']==iArm]
-            x=dfLing_arm.lingert
-            x=np.clip(x,0,bins.max())
+                dfLing_arm=dfLing[dfLing['armNo']==iArm]
+                x=dfLing_arm.lingert
+                x=np.clip(x,0,bins.max())
 
-            ha[0,1].hist(x,bins=bins,cumulative=False,density=False,histtype='step',color=colors[iArm],lw=2)
-            ha[0,1].hist(x,bins=bins,cumulative=False,density=False,histtype='stepfilled',alpha=facealpha,color=colors[iArm],edgecolor='None')
+                ha[0,1].hist(x,bins=bins,cumulative=False,density=False,histtype='step',color=colors[iArm],lw=2)
+                ha[0,1].hist(x,bins=bins,cumulative=False,density=False,histtype='stepfilled',alpha=facealpha,color=colors[iArm],edgecolor='None')
 
         ha[0,1].set_xlabel('Visit duration (s)',fontsize=fs_lab)
         ha[0,1].set_ylabel('Counts',fontsize=fs_lab)
