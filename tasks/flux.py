@@ -33,7 +33,7 @@ class parseSess:
         dfPokes = pd.DataFrame({'tsPoke': [], 'arm': [], 'iTrial': []})
         dfRwd = pd.DataFrame({'tsRwd': [], 'arm': [], 'iTrial': [], 'n': []})
 
-        for iTrial in range(1,len(nTrials)):
+        for iTrial in range(len(nTrials)):
             listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[iTrial]
             stateTraj = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]-1]
             events = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()
@@ -80,7 +80,7 @@ class parseSess:
             ndx=np.logical_and(ndx,dfPokes.index==iTrial)
             try:
                 assert(sum(ndx)>=1)
-                dfPokes.iloc[np.arange(len(ndx))[ndx][0],dfPokes.columns.get_loc('isRwded')]=True
+                dfPokes.iloc[np.arange(len(ndx))[ndx.values][0],dfPokes.columns.get_loc('isRwded')]=True
             except:
                 warnings.warn('Reward could not be assigned to poke response. Trial #%d of session %s' % (iTrial,self.fname))
 
