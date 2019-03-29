@@ -211,17 +211,18 @@ class parseSess:
             ndx = dfTince['armNo']==iArm
             x=dfTince[ndx]['tinceR']
             y=dfTince[ndx]['isRwd']
+            x_hat = np.linspace(x.min(),x.max(),100)
         #     x=1-np.exp(-1*lambdas[listArmJ[0]]*x)
 
-            ndx=np.digitize(x,np.percentile(x,np.linspace(0,100,11)))
+            ndx=np.digitize(x,np.histogram_bin_edges(x,bins='auto'))
             x = np.array([x[ndx == i].mean() for i in range(1, len(set(ndx)))])
             y = np.array([y[ndx == i].mean() for i in range(1, len(set(ndx)))])
 
-            y_hat = np.ravel(1-np.exp(float(self.params['Mean' + 'ABC'[iArm]])**-1*np.array(x)*-1) if self.params.VI else np.array([x > self.params['Mean' + 'ABC'[iArm]]]))
+            y_hat = np.ravel(1-np.exp(float(self.params['Mean' + 'ABC'[iArm]])**-1*np.array(x_hat)*-1) if self.params.VI else np.array([x_hat > self.params['Mean' + 'ABC'[iArm]]]))
 
             ha[1,0].scatter(x,y,c=colors[iArm])
             ha[1,0].plot(x,y,c=colors[iArm])
-            ha[1,0].plot(x,y_hat,c=colors[iArm],linestyle='--')
+            ha[1,0].plot(x_hat,y_hat,c=colors[iArm],linestyle='--')
 
         ha[1,0].set_xlabel('Latency to respond (s)',fontsize=fs_lab)
         ha[1,0].set_ylabel('p ( reward )',fontsize=fs_lab)
