@@ -211,9 +211,8 @@ class parseSess:
             ndx = dfTince['armNo']==iArm
             x=dfTince[ndx]['tinceR']
             y=dfTince[ndx]['isRwd']
-            x_hat = np.linspace(x.min(),x.max(),100)
-        #     x=1-np.exp(-1*lambdas[listArmJ[0]]*x)
-
+            x_hat = np.linspace(np.percentile(x,5),np.percentile(x,95),100)
+            
             ndx=np.digitize(x,np.histogram_bin_edges(x,bins='auto'))
             x = np.array([x[ndx == i].mean() for i in range(1, len(set(ndx)))])
             y = np.array([y[ndx == i].mean() for i in range(1, len(set(ndx)))])
