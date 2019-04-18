@@ -19,8 +19,12 @@ class parseSess:
         mysess = sio.loadmat(filepath, squeeze_me=True)
         self.fname = os.path.split(filepath)[1]
         self.bpod = mysess['SessionData']
-
-        self.params = pd.Series({n: np.asscalar(self.bpod['Settings'].item()['GUI'].item()[n]) for n in self.bpod['Settings'].item()['GUI'].item().dtype.names})
+        try:
+            self.params = pd.Series({n: np.asscalar(self.bpod['Settings'].item()['GUI'].item()[n]) for n in self.bpod['Settings'].item()['GUI'].item().dtype.names})
+        except Exception as e:
+            print(e)
+            self.params = pd.Series()
+            warnings.warn('Could not load settings.')
         self.parse()
 
     def parse(self):
@@ -37,7 +41,6 @@ class parseSess:
         tsPokeL = [[]]*nTrials
         tsPokeC = [[]]*nTrials
         tsPokeR = [[]]*nTrials
-        stateTraj = [[]]*nTrials
         FixBroke = np.full(nTrials,False)
         EarlyWithdrawal = np.full(nTrials,False)
         waitingTime = np.full(nTrials,np.nan)
@@ -110,6 +113,29 @@ class parseSess:
                 stimDelay[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()[1] - self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Cin'].item()[0]
             else:
                 stimDelay[iTrial] = np.diff(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Cin'].item()).item()
+
+            if any(['Lin' in stateTraj[iTrial]]) or any(['Rin' in stateTraj[iTrial]]):
+                Sin = stateTraj[iTrial][np.logical_or([n == 'Lin' for n in stateTraj[iTrial]],[n == 'Rin' for n in stateTraj[iTrial]])][0]
+                if any(['stillLin' in stateTraj[iTrial]]) or any(['stillRin' in stateTraj[iTrial]]):
+                    stillSin = stateTraj[iTrial][np.logical_or([n == 'stillLin' for n in stateTraj[iTrial]],[n == 'stillRin' for n in stateTraj[iTrial]])].item()
+                    feedbackDelay[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stillSin].item()[1] - np.ravel(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[Sin].item()).min()
+                elif any(['Early' + Sin[0] + 'out' in stateTraj[iTrial]]):
+                # elif any([n.startswith('Early') for n in stateTraj[iTrial]]):
+                    feedbackDelay[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Early' + Sin[0] + 'out'].item()[1] - np.ravel(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[Sin].item()).min()
+                elif any([n.startswith('rewarded_') for n in stateTraj[iTrial]]):
+                    rewarded_Sin = stateTraj[iTrial][[n.startswith('rewarded_') for n in stateTraj[iTrial]]].item()
+                    feedbackDelay[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[rewarded_Sin].item()[0] - np.ravel(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[Sin].item()).min()
+                else:
+                    pass
+
+            #
+            # else:
+            #     feedbackDelay[iTrial] = np.diff(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Cin'].item()).item()
+            #
+            # if any(['stillSampling' in stateTraj[iTrial]]):
+            #     feedbackDelay[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()[1] - self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Cin'].item()[0]
+            # else:
+            #     feedbackDelay[iTrial] = np.diff(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Cin'].item()).item()
             #     # if ChoiceLeft[iTrial]:
             #     #     waitingTime[iTrial] = np.diff(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Lin'].item())
             #     # if ChoiceRight[iTrial]:
@@ -143,7 +169,7 @@ class parseSess:
         self.parsedData = pd.DataFrame({'iTrial': np.arange(nTrials),
                                         'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss,
                                         'isRewarded': Rewarded, 'isBrokeFix': FixBroke, 'isEarlyWithdr': EarlyWithdrawal,
-                                        'stateTraj': stateTraj, 'WT': waitingTime, 'StimDelay': stimDelay, #'FeedbackDelay': feedbackDelay,
+                                        'stateTraj': stateTraj, 'WT': waitingTime, 'StimDelay': stimDelay, 'FeedbackDelay': feedbackDelay,
                                         'tsCin': tsCin, 'tsChoice': tsChoice, 'tsRwd': tsRwd,
                                         'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR, 'tsState0': tsState0})
 
@@ -181,7 +207,8 @@ class parseSess:
 
         self.parsedData.loc[:,'lauglim_pLeft'] = np.nan
         try:
-            self.parsedData.loc[ndx,'lauglim_pLeft'] = linear_model.LogisticRegression(solver='lbfgs').fit(X=X,y=y).predict_proba(X)[:,1]
+            self.lauglim = linear_model.LogisticRegression(solver='lbfgs').fit(X=X,y=y)
+            self.parsedData.loc[ndx,'lauglim_pLeft'] = self.lauglim.predict_proba(X)[:,1]
         except Exception as e:
             print(e)
         self.parsedData.loc[:,'lauglim_isGreedy'] = np.logical_or(np.logical_and(self.parsedData.lauglim_pLeft>0.5,self.parsedData.isChoiceLeft),
@@ -293,16 +320,32 @@ class parseSess:
         facealpha=.4
         hf, ha = plt.subplots(3,3,figsize=(10,10))
 
-        ## Panel X - StimDelay
+        ## Panel A - Cumulative Trials
 
-        bins = np.histogram_bin_edges(self.parsedData.StimDelay)
-        ha[0,0].hist(self.parsedData.StimDelay.loc[np.logical_not(self.parsedData.isBrokeFix)],color='xkcd:blue',bins=bins,alpha=facealpha,label='valid')
-        ha[0,0].hist(self.parsedData.StimDelay.loc[self.parsedData.isBrokeFix],color='xkcd:red',bins=bins,alpha=facealpha,label='brokeFix')
-        ha[0,0].legend()
-        ha[0,0].set_xlabel('StimDelay',fontsize=fs_lab)
-        ha[0,0].set_ylabel('Counts',fontsize=fs_lab)
+        ha[0,0].plot(np.cumsum(self.parsedData.isChoiceRight),np.cumsum(self.parsedData.isChoiceLeft),linewidth=lw)
+        ha[0,0].set_aspect(1)
+        ha[0,0].set_xlabel('Fraction right choices',fontsize=fs_lab)
+        ha[0,0].set_ylabel('Fraction left choices',fontsize=fs_lab)
 
-        ## Panel A - Matching
+        ## Panel B - StimDelay
+
+        bins = np.histogram_bin_edges(self.parsedData.StimDelay.dropna())
+        ha[0,1].hist(self.parsedData.StimDelay.loc[np.logical_not(self.parsedData.isBrokeFix)],color='xkcd:blue',bins=bins,alpha=facealpha,label='valid')
+        ha[0,1].hist(self.parsedData.StimDelay.loc[self.parsedData.isBrokeFix],color='xkcd:red',bins=bins,alpha=facealpha,label='brokeFix')
+        ha[0,1].legend(fancybox=True, framealpha=0.5)
+        ha[0,1].set_xlabel('StimDelay',fontsize=fs_lab)
+        ha[0,1].set_ylabel('Trial counts',fontsize=fs_lab)
+
+        ## Panel C - FeedbackDelay
+
+        bins = np.histogram_bin_edges(self.parsedData.FeedbackDelay.dropna())
+
+        ha[0,2].hist(self.parsedData.FeedbackDelay.loc[np.logical_not(self.parsedData.isEarlyWithdr)],color='xkcd:blue',bins=bins,alpha=facealpha,label='valid')
+        ha[0,2].hist(self.parsedData.FeedbackDelay.loc[self.parsedData.isEarlyWithdr],color='xkcd:red',bins=bins,alpha=facealpha,label='earlyWithdr')
+        ha[0,2].legend(fancybox=True, framealpha=0.5)
+        ha[0,2].set_xlabel('FeedbackDelay',fontsize=fs_lab)
+
+        ## Panel D - Matching
 
         df_match = pd.DataFrame({'iBlock':self.bpod['Custom'].item()['BlockNumber'].item(),
                          'isChoiceLeft':self.parsedData.isChoiceLeft,
@@ -322,14 +365,24 @@ class parseSess:
             ha[1,0].scatter(piv_match.isRwdLeft[ndx]/(piv_match.isRwdLeft[ndx]+piv_match.isRwdRight[ndx]),
                         piv_match['isChoiceLeft'][ndx],
                         color=colors_lr[iSide], label=['leftLo','leftHi'][iSide])
-        ha[1,0].legend()
+        ha[1,0].legend(fancybox=True, framealpha=0.5)
         ha[1,0].set_xlim([-.1,1.1])
         ha[1,0].set_ylim([-.1,1.1])
         ha[1,0].set_aspect(1)
         ha[1,0].set_xlabel('Fraction left rewards',fontsize=fs_lab)
         ha[1,0].set_ylabel('Fraction left choices',fontsize=fs_lab)
 
-        ## Panel B - Psychometrics
+        ## Panel E - Choice Kernel (LauGlim)
+        nhist=int(len(np.ravel(self.lauglim.coef_))/2)
+
+        ha[1,1].plot([0,nhist],np.ones(2)*self.lauglim.intercept_.item(),label='bias',linewidth=lw,alpha=facealpha)
+        ha[1,1].plot(np.ravel(self.lauglim.coef_)[nhist+1:],label='cho',linewidth=lw)
+        ha[1,1].plot(np.ravel(self.lauglim.coef_)[:nhist],label='rwd',linewidth=lw)
+        ha[1,1].set_xlabel('nTrials back',fontsize=fs_lab)
+        ha[1,1].set_ylabel('RegressCoeff',fontsize=fs_lab)
+        ha[1,1].legend(fancybox=True, framealpha=0.5)
+
+        ## Panel F - Psychometrics
 
         nbins = 8
 
@@ -347,8 +400,8 @@ class parseSess:
         df_psyc_idobs.loc[df_psyc_idobs.bin==df_psyc_idobs.bin.max(),'bin']=nbins
         piv_psyc_idobs = df_psyc_idobs.pivot_table(columns='bin').T
 
-        ha[1,1].scatter(piv_psyc_lauglim.lo,piv_psyc_lauglim.isChoiceLeft,label='lauglim')
-        ha[1,1].scatter(piv_psyc_idobs.lo,piv_psyc_idobs.isChoiceLeft,label='idobs')
+        ha[1,2].scatter(piv_psyc_lauglim.lo,piv_psyc_lauglim.isChoiceLeft,label='lauglim')
+        ha[1,2].scatter(piv_psyc_idobs.lo,piv_psyc_idobs.isChoiceLeft,label='idobs')
 
         if 'idobs2_pLeft' in self.parsedData.columns:
             df_psyc_idobs2 = pd.DataFrame({'lo':np.log(self.parsedData.idobs2_pLeft/self.parsedData.idobs2_pRight),
@@ -357,25 +410,16 @@ class parseSess:
             df_psyc_idobs2.loc[:,'bin'] = np.digitize(df_psyc_idobs2.lo,np.percentile(df_psyc_idobs2.lo,np.linspace(0,100,nbins+1)))
             df_psyc_idobs2.loc[df_psyc_idobs2.bin==df_psyc_idobs2.bin.max(),'bin']=nbins
             piv_psyc_idobs2 = df_psyc_idobs2.pivot_table(columns='bin').T
-            ha[1,1].scatter(piv_psyc_idobs2.lo,piv_psyc_idobs2.isChoiceLeft,label='idobs2')
+            ha[1,2].scatter(piv_psyc_idobs2.lo,piv_psyc_idobs2.isChoiceLeft,label='idobs2')
 
-        ha[1,1].set_ylim([-.1,1.1])
-        x_hat = np.linspace(ha[1,1].get_xlim()[0],ha[1,1].get_xlim()[1],50)
-        ha[1,1].plot(x_hat,1/(1+np.exp(-x_hat)),'k',alpha=facealpha,linewidth=lw)
-        ha[1,1].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
-        ha[1,1].set_ylabel('Fraction left choices',fontsize=fs_lab)
-        ha[1,1].legend()
-
-        ## Panel C - Cumulative Trials
-
-        ha[1,2].plot(np.cumsum(self.parsedData.isChoiceRight),np.cumsum(self.parsedData.isChoiceLeft),linewidth=lw)
-        ha[1,2].set_aspect(1)
-        ha[1,2].set_xlabel('Fraction right choices',fontsize=fs_lab)
+        ha[1,2].set_ylim([-.1,1.1])
+        x_hat = np.linspace(ha[1,2].get_xlim()[0],ha[1,2].get_xlim()[1],50)
+        ha[1,2].plot(x_hat,1/(1+np.exp(-x_hat)),'k',alpha=facealpha,linewidth=lw)
+        ha[1,2].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
         ha[1,2].set_ylabel('Fraction left choices',fontsize=fs_lab)
+        ha[1,2].legend(fancybox=True, framealpha=0.5)
 
-        plt.tight_layout()
-
-        ## Panel D - Vevaio LauGlim
+        ## Panel G - Vevaio LauGlim
 
         nbins = 6
 
@@ -389,7 +433,7 @@ class parseSess:
         df_vevaio_lauglim.loc[df_vevaio_lauglim.loc[:,'bin']>nbins,'bin'] = nbins
         ha[2,0].scatter(df_vevaio_lauglim.lo,df_vevaio_lauglim.wt,color='xkcd:green',label='_nolegend_',alpha=.1)
         piv_vevaio_lauglim = df_vevaio_lauglim.pivot_table(columns='bin').T
-        ha[2,0].plot(piv_vevaio_lauglim.lo,piv_vevaio_lauglim.wt,color='xkcd:green',label='greedy')
+        ha[2,0].plot(piv_vevaio_lauglim.lo,piv_vevaio_lauglim.wt,color='xkcd:green',label='greedy',linewidth=lw)
 
         ndx = np.logical_and(np.logical_not(self.parsedData.lauglim_isGreedy),
                              np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
@@ -401,13 +445,13 @@ class parseSess:
         df_vevaio_lauglim.loc[df_vevaio_lauglim.loc[:,'bin']>nbins,'bin'] = nbins
         ha[2,0].scatter(df_vevaio_lauglim.lo,df_vevaio_lauglim.wt,color='xkcd:red',label='_nolegend_',alpha=.1)
         piv_vevaio_lauglim = df_vevaio_lauglim.pivot_table(columns='bin').T
-        ha[2,0].plot(piv_vevaio_lauglim.lo,piv_vevaio_lauglim.wt,color='xkcd:red',label='notGreedy')
+        ha[2,0].plot(piv_vevaio_lauglim.lo,piv_vevaio_lauglim.wt,color='xkcd:red',label='notGreedy',linewidth=lw)
         ha[2,0].set_xlabel(r'$ | log \left( \frac{P_{Left}}{P_{Right}} \right)|$',fontsize=fs_lab)
         ha[2,0].set_ylabel('waiting time (s)',fontsize=fs_lab)
         ha[2,0].set_title('lauglim',fontsize=fs_title)
-        ha[2,0].legend()
+        ha[2,0].legend(fancybox=True, framealpha=0.5)
 
-        ## Panel E - Vevaio Ideal Observer 1 (ignores waiting time)
+        ## Panel H - Vevaio Ideal Observer 1 (ignores waiting time)
 
         ndx = np.logical_and(self.parsedData.idobs_isGreedy,
                              np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
@@ -419,7 +463,7 @@ class parseSess:
         df_vevaio_idobs.loc[df_vevaio_idobs.loc[:,'bin']>nbins,'bin'] = nbins
         ha[2,1].scatter(df_vevaio_idobs.lo,df_vevaio_idobs.wt,color='xkcd:green',label='_nolegend_',alpha=.1)
         piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin').T
-        ha[2,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.wt,color='xkcd:green',label='greedy')
+        ha[2,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.wt,color='xkcd:green',label='greedy',linewidth=lw)
 
         ndx = np.logical_and(np.logical_not(self.parsedData.idobs_isGreedy),
                              np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
@@ -431,11 +475,11 @@ class parseSess:
         df_vevaio_idobs.loc[df_vevaio_idobs.loc[:,'bin']>nbins,'bin'] = nbins
         ha[2,1].scatter(df_vevaio_idobs.lo,df_vevaio_idobs.wt,color='xkcd:red',label='_nolegend_',alpha=.1)
         piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin').T
-        ha[2,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.wt,color='xkcd:red',label='notGreedy')
+        ha[2,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.wt,color='xkcd:red',label='notGreedy',linewidth=lw)
         ha[2,1].set_xlabel(r'$ | log \left( \frac{P_{Left}}{P_{Right}} \right)|$',fontsize=fs_lab)
         ha[2,1].set_ylabel('waiting time (s)',fontsize=fs_lab)
         ha[2,1].set_title('idobs',fontsize=fs_title)
-        ha[2,1].legend()
+        ha[2,1].legend(fancybox=True, framealpha=0.5)
         # nbins = 4
         #
         # ndx = np.logical_and(self.parsedData.idobs_isGreedy,
@@ -467,9 +511,9 @@ class parseSess:
         # ha[2,1].set_xlabel(r'$ | log (P_{Left}) -  log (P_{Right})|$',fontsize=fs_lab)
         # ha[2,1].set_ylabel('waiting time (s)',fontsize=fs_lab)
         # ha[2,1].set_title('Ideal Observer 1',fontsize=fs_title)
-        # ha[2,1].legend()
+        # ha[2,1].legend(fancybox=True, framealpha=0.5)
 
-        ## Panel F - Vevaio Ideal Observer 2 (takes waiting time evidence into account)
+        ## Panel I - Vevaio Ideal Observer 2 (takes waiting time evidence into account)
 
         if 'idobs2_pLeft' in self.parsedData.columns:
             ndx = np.logical_and(self.parsedData.idobs2_isGreedy,
@@ -482,7 +526,7 @@ class parseSess:
             df_vevaio_idobs2.loc[df_vevaio_idobs2.loc[:,'bin']>nbins,'bin'] = nbins
             ha[2,2].scatter(df_vevaio_idobs2.lo,df_vevaio_idobs2.wt,color='xkcd:green',label='_nolegend_',alpha=.1)
             piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin').T
-            ha[2,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.wt,color='xkcd:green',label='greedy')
+            ha[2,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.wt,color='xkcd:green',label='greedy',linewidth=lw)
 
             ndx = np.logical_and(np.logical_not(self.parsedData.idobs2_isGreedy),
                                  np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
@@ -494,11 +538,11 @@ class parseSess:
             df_vevaio_idobs2.loc[df_vevaio_idobs2.loc[:,'bin']>nbins,'bin'] = nbins
             ha[2,2].scatter(df_vevaio_idobs2.lo,df_vevaio_idobs2.wt,color='xkcd:red',label='_nolegend_',alpha=.1)
             piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin').T
-            ha[2,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.wt,color='xkcd:red',label='notGreedy')
+            ha[2,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.wt,color='xkcd:red',label='notGreedy',linewidth=lw)
             ha[2,2].set_xlabel(r'$ | log \left( \frac{P_{Left}}{P_{Right}} \right)|$',fontsize=fs_lab)
             ha[2,2].set_ylabel('waiting time (s)',fontsize=fs_lab)
             ha[2,2].set_title('idobs2',fontsize=fs_title)
-            ha[2,2].legend()
+            ha[2,2].legend(fancybox=True, framealpha=0.5)
 
             # nbins = 4
             #
@@ -528,8 +572,10 @@ class parseSess:
             # ha[2,2].set_xlabel(r'$ | log (P_{Left}) -  log (P_{Right})|$',fontsize=fs_lab)
             # ha[2,2].set_ylabel('waiting time (s)',fontsize=fs_lab)
             # ha[2,2].set_title('Ideal Observer 2',fontsize=fs_title)
-            # ha[2,2].legend()
-        plt.tight_layout()
+            # ha[2,2].legend(fancybox=True, framealpha=0.5)
+
+        plt.suptitle(self.fname)
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         """
 
         if not dfInt.empty:
