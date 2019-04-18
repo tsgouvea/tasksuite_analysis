@@ -55,21 +55,55 @@ class parseSess:
         ST = np.full(nTrials,np.nan)#<---
         tsErrTone = np.full(nTrials,np.nan)
         """
+
+        if not 'Ports_LMR' in self.params.index:
+            self.params.loc['Ports_LMR'] = 'XXX'
+            iTrial = 0
+            while any([self.params.Ports_LMR[i] == 'X' for i in range(len(self.params.Ports_LMR))]):
+                listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[iTrial]
+                stateTraj = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]-1] #from 1- to 0-based indexing
+                events = np.array(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item().dtype.names)
+                events = events[np.logical_and([n.startswith('Port') for n in events],[n.endswith('In') for n in events])]
+                dic_events = {e:ts for e in events for ts in np.ravel(np.array(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[e].item()))}
+                LMR = list(self.params.Ports_LMR)
+                if LMR[0] == 'X' and 'Lin' in stateTraj:
+                    try:
+                        ts_stateLin = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Lin'].item()[0]
+                        LMR[0] = np.array(list(dic_events.keys()))[np.isclose(ts_stateLin,[dic_events[n] for n in dic_events.keys()])].item().split('Port')[1].split('In')[0]
+                    except:
+                        pass
+                if LMR[1] == 'X' and 'Cin' in stateTraj:
+                    try:
+                        ts_stateCin = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Cin'].item()[0]
+                        LMR[1] = np.array(list(dic_events.keys()))[np.isclose(ts_stateCin,[dic_events[n] for n in dic_events.keys()])].item().split('Port')[1].split('In')[0]
+                    except:
+                        pass
+                if LMR[2] == 'X' and 'Rin' in stateTraj:
+                    try:
+                        ts_stateRin = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Rin'].item()[0]
+                        LMR[2] = np.array(list(dic_events.keys()))[np.isclose(ts_stateRin,[dic_events[n] for n in dic_events.keys()])].item().split('Port')[1].split('In')[0]
+                    except:
+                        pass
+                self.params.Ports_LMR = "".join(LMR)
+                iTrial+=1
+
+        PortL = 'Port' + str(int(self.params.Ports_LMR))[0] + 'In'
+        PortC = 'Port' + str(int(self.params.Ports_LMR))[1] + 'In'
+        PortR = 'Port' + str(int(self.params.Ports_LMR))[2] + 'In'
+        stateTraj = [[]]*nTrials
+
         for iTrial in range(nTrials):
             listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[iTrial]
             stateTraj[iTrial] = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]-1] #from 1- to 0-based indexing
 
             tsCin[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Cin'].item()[1]
 
-            PortL = 'Port' + str(int(self.params.Ports_LMR))[0] + 'In'
             if any([PortL in self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item().dtype.names]) :
                 tsPokeL[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[PortL].item()
 
-            PortC = 'Port' + str(int(self.params.Ports_LMR))[1] + 'In'
             if any([PortC in self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item().dtype.names]) :
                 tsPokeC[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[PortC].item()
 
-            PortR = 'Port' + str(int(self.params.Ports_LMR))[2] + 'In'
             if any([PortR in self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item().dtype.names]) :
                 tsPokeR[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[PortR].item()
 
