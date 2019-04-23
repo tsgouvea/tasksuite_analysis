@@ -50,14 +50,6 @@ class parseSess:
         assert(len(tsState0) > 20), "Session is only {} trials long. Aborting.".format(len(tsState0))
         tsState0 = tsState0 - tsState0[0]
 
-        """
-        Feedback = np.full(nTrials,False)#<---
-        FixDur = np.full(nTrials,np.nan)#<---
-        MT = np.full(nTrials,np.nan)#<---
-        ST = np.full(nTrials,np.nan)#<---
-        tsErrTone = np.full(nTrials,np.nan)
-        """
-
         if not 'Ports_LMR' in self.params.index:
             self.params.loc['Ports_LMR'] = 'XXX'
             iTrial = 0
@@ -168,7 +160,7 @@ class parseSess:
                                        np.logical_and(ChoiceRight,self.bpod['Custom'].item()['Baited'].item()['Right'].item()),
                                       )
         assert(isChoiceBaited[Rewarded].all()), "Impossible trials found: unbaited AND rewarded."
-        waitingTime[isChoiceBaited] = np.nan
+        # waitingTime[isChoiceBaited] = np.nan
 
         self.parsedData = pd.DataFrame({'iTrial': np.arange(nTrials),
                                         'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss,
@@ -214,17 +206,17 @@ class parseSess:
 
         desigm_R = pd.DataFrame(columns=['R_t-{0:0>2}'.format(i) for i in range(1,nhist+1)],index=np.arange(len(ndx)),data=np.nan)
         desigm_R.loc[ndx,:] = R
-        desigm_R.dropna(axis=0,inplace=True)
+        desigm_R.dropna(axis=0,inplace=True,how='all')
         desigm_C = pd.DataFrame(columns=['C_t-{0:0>2}'.format(i) for i in range(1,nhist+1)],index=np.arange(len(ndx)),data=np.nan)
         desigm_C.loc[ndx,:] = C
-        desigm_C.dropna(axis=0,inplace=True)
+        desigm_C.dropna(axis=0,inplace=True,how='all')
 
         X = pd.concat((desigm_R,desigm_C),axis=1,sort=False)
 
         tempy = np.full(tempbhv.isChoiceLeft.shape,np.nan)
         tempy[tempbhv.isChoiceLeft] = 1
         tempy[tempbhv.isChoiceRight] = 0
-        y = pd.Series(index=X.index,name='isChoiceLeft',data=tempy,dtype=bool)
+        y = pd.Series(index=X.index,name='obsChoice',data=tempy,dtype=bool)
 
         try:
             self.lauglim = linear_model.LogisticRegression(solver='lbfgs').fit(X=X,y=y)
@@ -279,8 +271,8 @@ class parseSess:
         pHi=self.params.pHi/100.
         pLo=self.params.pLo/100.
         leftHi=self.bpod['Custom'].item()['LeftHi'].item().astype(bool)
-        isChoiceLeft=self.parsedData.isChoiceLeft
-        isChoiceRight=self.parsedData.isChoiceRight
+        isChoiceLeft=self.parsedData.isChoiceLeft.copy()
+        isChoiceRight=self.parsedData.isChoiceRight.copy()
         isValid=(isChoiceLeft | isChoiceRight)
         isRewarded=self.parsedData.isRewarded
 
@@ -327,6 +319,8 @@ class parseSess:
                     postl[iTrial] = p_r_given_wt + (1-p_r_given_wt)*pl
                 if isChoiceRight[iTrial-1]:
                     postr[iTrial] = p_r_given_wt + (1-p_r_given_wt)*pr
+            if np.isnan(postl[iTrial]).any() or np.isnan(postr[iTrial]).any():
+                warnings.warn("nan found at trial {}".format(iTrial))
 
                 # print("wt: {:.2f} \t prior:{:.2f} \t p_wt_given_r:{:.2f} \t p_r_given_wt:{:.2f}".format(wt,prior,p_wt_given_r,p_r_given_wt))
 
@@ -459,7 +453,7 @@ class parseSess:
 
             ndx = np.logical_and(self.parsedData.lauglim_isGreedy,
                                  np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
-            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
+            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
             if ndx.sum() > 0:
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_lauglim = pd.DataFrame({'lo':np.log(temp_bhv.lauglim_pLeft/(1-temp_bhv.lauglim_pLeft)),
@@ -467,7 +461,7 @@ class parseSess:
                 df_vevaio_lauglim.loc[:,'bin'] = np.digitize(df_vevaio_lauglim.lo,np.unique(np.percentile(df_vevaio_lauglim.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_lauglim.loc[df_vevaio_lauglim.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,0].scatter(df_vevaio_lauglim.lo,df_vevaio_lauglim.wt,color='xkcd:green',label='_nolegend_',alpha=.1)
-                piv_vevaio_lauglim = df_vevaio_lauglim.pivot_table(columns='bin').T
+                piv_vevaio_lauglim = df_vevaio_lauglim.pivot_table(columns='bin',aggfunc=np.median).T
                 ha[2,0].plot(piv_vevaio_lauglim.lo,piv_vevaio_lauglim.wt,color='xkcd:green',label='greedy',linewidth=lw)
                 ha[2,0].legend(fancybox=True, framealpha=0.5)
 
@@ -481,10 +475,10 @@ class parseSess:
                 df_vevaio_lauglim.loc[:,'bin'] = np.digitize(df_vevaio_lauglim.lo,np.unique(np.percentile(df_vevaio_lauglim.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_lauglim.loc[df_vevaio_lauglim.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,0].scatter(df_vevaio_lauglim.lo,df_vevaio_lauglim.wt,color='xkcd:red',label='_nolegend_',alpha=.1)
-                piv_vevaio_lauglim = df_vevaio_lauglim.pivot_table(columns='bin').T
+                piv_vevaio_lauglim = df_vevaio_lauglim.pivot_table(columns='bin',aggfunc=np.median).T
                 ha[2,0].plot(piv_vevaio_lauglim.lo,piv_vevaio_lauglim.wt,color='xkcd:red',label='notGreedy',linewidth=lw)
                 ha[2,0].legend(fancybox=True, framealpha=0.5)
-        ha[2,0].set_xlabel(r'$ | log \left( \frac{P_{Left}}{P_{Right}} \right)|$',fontsize=fs_lab)
+        ha[2,0].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
         ha[2,0].set_ylabel('waiting time (s)',fontsize=fs_lab)
         ha[2,0].set_title('lauglim',fontsize=fs_title)
 
@@ -492,7 +486,7 @@ class parseSess:
         if 'idobs_pLeft' in self.parsedData.columns:
             ndx = np.logical_and(self.parsedData.idobs_isGreedy,
                                  np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
-            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
+            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
             if ndx.sum() > 0:
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_idobs = pd.DataFrame({'lo':np.log(temp_bhv.idobs_pLeft/temp_bhv.idobs_pRight),
@@ -500,7 +494,7 @@ class parseSess:
                 df_vevaio_idobs.loc[:,'bin'] = np.digitize(df_vevaio_idobs.lo,np.unique(np.percentile(df_vevaio_idobs.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_idobs.loc[df_vevaio_idobs.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,1].scatter(df_vevaio_idobs.lo,df_vevaio_idobs.wt,color='xkcd:green',label='_nolegend_',alpha=.1)
-                piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin').T
+                piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin',aggfunc=np.median).T
                 ha[2,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.wt,color='xkcd:green',label='greedy',linewidth=lw)
                 ha[2,1].legend(fancybox=True, framealpha=0.5)
 
@@ -514,51 +508,19 @@ class parseSess:
                 df_vevaio_idobs.loc[:,'bin'] = np.digitize(df_vevaio_idobs.lo,np.unique(np.percentile(df_vevaio_idobs.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_idobs.loc[df_vevaio_idobs.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,1].scatter(df_vevaio_idobs.lo,df_vevaio_idobs.wt,color='xkcd:red',label='_nolegend_',alpha=.1)
-                piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin').T
+                piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin',aggfunc=np.median).T
                 ha[2,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.wt,color='xkcd:red',label='notGreedy',linewidth=lw)
                 ha[2,1].legend(fancybox=True, framealpha=0.5)
-        ha[2,1].set_xlabel(r'$ | log \left( \frac{P_{Left}}{P_{Right}} \right)|$',fontsize=fs_lab)
+        ha[2,1].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
         ha[2,1].set_ylabel('waiting time (s)',fontsize=fs_lab)
         ha[2,1].set_title('idobs',fontsize=fs_title)
-        # nbins = 4
-        #
-        # ndx = np.logical_and(self.parsedData.idobs_isGreedy,
-        #                      np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
-        # ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
-        # temp_bhv = self.parsedData[ndx].copy()
-        # df_vevaio_idobs = pd.DataFrame({'lo':abs(np.log(temp_bhv.idobs_pLeft/temp_bhv.idobs_pRight)),
-        #                                 'wt':temp_bhv.WT})
-        # df_vevaio_idobs.loc[:,'bin'] = np.digitize(df_vevaio_idobs.lo,np.unique(np.percentile(df_vevaio_idobs.lo,np.linspace(0,100,nbins+1))))
-        # piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin').T
-        # # display(piv_vevaio_idobs)
-        # ha[2,1].scatter(piv_vevaio_idobs.lo,piv_vevaio_idobs.wt,color='xkcd:green',label='greedy')
-        # ha[2,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.wt,color='xkcd:green',label='_nolegend_')
-        #
-        # ndx = np.logical_and(np.logical_not(self.parsedData.idobs_isGreedy),
-        #                      np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
-        # temp_bhv = self.parsedData[ndx].copy()
-        # df_vevaio_idobs = pd.DataFrame({'lo':abs(np.log(temp_bhv.idobs_pLeft/temp_bhv.idobs_pRight)),
-        #                                 'wt':temp_bhv.WT})
-        # df_vevaio_idobs.loc[:,'bin'] = np.digitize(df_vevaio_idobs.lo,np.unique(np.percentile(df_vevaio_idobs.lo,np.linspace(0,100,nbins+1))))
-        # if np.sum(df_vevaio_idobs.bin==df_vevaio_idobs.bin.max()) < 2:
-        #     df_vevaio_idobs.loc[df_vevaio_idobs.bin==df_vevaio_idobs.bin.max(),'bin']=df_vevaio_idobs.bin.max()-1
-        # piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin').T
-        # # display(piv_vevaio_idobs)
-        # ha[2,1].scatter(piv_vevaio_idobs.lo,piv_vevaio_idobs.wt,color='xkcd:red',label='notGreedy')
-        # ha[2,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.wt,color='xkcd:red',label='_nolegend_')
-        #
-        # # ha[2,1].xlabel(r'$abs \left(log \left[ \frac{P_{Left}}{P_{Right}} \right] \right)$',fontsize=20)
-        # ha[2,1].set_xlabel(r'$ | log (P_{Left}) -  log (P_{Right})|$',fontsize=fs_lab)
-        # ha[2,1].set_ylabel('waiting time (s)',fontsize=fs_lab)
-        # ha[2,1].set_title('Ideal Observer 1',fontsize=fs_title)
-        # ha[2,1].legend(fancybox=True, framealpha=0.5)
 
         ## Panel I - Vevaio Ideal Observer 2 (takes waiting time evidence into account)
 
         if 'idobs2_pLeft' in self.parsedData.columns:
             ndx = np.logical_and(self.parsedData.idobs2_isGreedy,
                                  np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
-            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
+            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
             if ndx.sum() > 0:
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_idobs2 = pd.DataFrame({'lo':np.log(temp_bhv.idobs2_pLeft/temp_bhv.idobs2_pRight),
@@ -566,7 +528,7 @@ class parseSess:
                 df_vevaio_idobs2.loc[:,'bin'] = np.digitize(df_vevaio_idobs2.lo,np.unique(np.percentile(df_vevaio_idobs2.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_idobs2.loc[df_vevaio_idobs2.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,2].scatter(df_vevaio_idobs2.lo,df_vevaio_idobs2.wt,color='xkcd:green',label='_nolegend_',alpha=.1)
-                piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin').T
+                piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin',aggfunc=np.median).T
                 ha[2,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.wt,color='xkcd:green',label='greedy',linewidth=lw)
 
             if ndx.sum() > 0:
@@ -579,42 +541,12 @@ class parseSess:
                 df_vevaio_idobs2.loc[:,'bin'] = np.digitize(df_vevaio_idobs2.lo,np.unique(np.percentile(df_vevaio_idobs2.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_idobs2.loc[df_vevaio_idobs2.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,2].scatter(df_vevaio_idobs2.lo,df_vevaio_idobs2.wt,color='xkcd:red',label='_nolegend_',alpha=.1)
-                piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin').T
+                piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin',aggfunc=np.median).T
                 ha[2,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.wt,color='xkcd:red',label='notGreedy',linewidth=lw)
                 ha[2,2].legend(fancybox=True, framealpha=0.5)
-            ha[2,2].set_xlabel(r'$ | log \left( \frac{P_{Left}}{P_{Right}} \right)|$',fontsize=fs_lab)
+            ha[2,2].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
             ha[2,2].set_ylabel('waiting time (s)',fontsize=fs_lab)
             ha[2,2].set_title('idobs2',fontsize=fs_title)
-
-            # nbins = 4
-            #
-            # temp_bhv = self.parsedData[self.parsedData.idobs2_isGreedy].copy()
-            # df_vevaio_idobs2 = pd.DataFrame({'lo':abs(np.log(temp_bhv.idobs2_pLeft/temp_bhv.idobs2_pRight)),
-            #                                 'wt':temp_bhv.WT})
-            # df_vevaio_idobs2.loc[:,'bin'] = np.digitize(df_vevaio_idobs2.lo,np.unique(np.percentile(df_vevaio_idobs2.lo,np.linspace(0,100,nbins+1))))
-            # piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin').T
-            # # display(piv_vevaio_idobs2)
-            # ha[2,2].scatter(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.wt,color='xkcd:green',label='greedy')
-            # ha[2,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.wt,color='xkcd:green',label='_nolegend_')
-            #
-            # ndx = np.logical_and(np.logical_not(self.parsedData.idobs2_isGreedy),
-            #                      np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
-            # temp_bhv = self.parsedData[ndx].copy()
-            # df_vevaio_idobs2 = pd.DataFrame({'lo':abs(np.log(temp_bhv.idobs2_pLeft/temp_bhv.idobs2_pRight)),
-            #                                 'wt':temp_bhv.WT})
-            # df_vevaio_idobs2.loc[:,'bin'] = np.digitize(df_vevaio_idobs2.lo,np.unique(np.percentile(df_vevaio_idobs2.lo,np.linspace(0,100,nbins+1))))
-            # if np.sum(df_vevaio_idobs2.bin==df_vevaio_idobs2.bin.max()) < 2:
-            #     df_vevaio_idobs2.loc[df_vevaio_idobs2.bin==df_vevaio_idobs2.bin.max(),'bin']=df_vevaio_idobs2.bin.max()-1
-            # piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin').T
-            # # display(piv_vevaio_idobs2)
-            # ha[2,2].scatter(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.wt,color='xkcd:red',label='notGreedy')
-            # ha[2,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.wt,color='xkcd:red',label='_nolegend_')
-            #
-            # # ha[2,2].xlabel(r'$abs \left(log \left[ \frac{P_{Left}}{P_{Right}} \right] \right)$',fontsize=20)
-            # ha[2,2].set_xlabel(r'$ | log (P_{Left}) -  log (P_{Right})|$',fontsize=fs_lab)
-            # ha[2,2].set_ylabel('waiting time (s)',fontsize=fs_lab)
-            # ha[2,2].set_title('Ideal Observer 2',fontsize=fs_title)
-            # ha[2,2].legend(fancybox=True, framealpha=0.5)
 
         plt.suptitle(self.fname)
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
