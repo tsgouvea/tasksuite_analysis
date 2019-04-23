@@ -178,39 +178,58 @@ class parseSess:
                                         'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR, 'tsState0': tsState0})
 
         self.parsedData = self.parsedData.set_index('iTrial')
+
+        if not 'pLo' in self.params.index:
+            ndx = np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight)
+            ndx = np.logical_and(ndx,np.hstack((False,self.parsedData.isRewarded.iloc[:-1])))
+            leftHi = self.bpod['Custom'].item()['LeftHi'].item().astype(bool)
+            ndxHi = np.logical_or(np.logical_and(self.parsedData.isChoiceLeft,leftHi),
+                                  np.logical_and(self.parsedData.isChoiceRight,np.logical_not(leftHi)))
+            ndxHi = np.logical_and(ndx,ndxHi)
+            self.params.loc['pHi'] = self.parsedData.isRewarded.loc[ndxHi].mean()/np.logical_not(self.parsedData.isEarlyWithdr.loc[ndxHi]).mean()
+            ndxLo = np.logical_and(ndx,np.logical_not(ndxHi))
+            self.params.loc['pLo'] = self.parsedData.isRewarded.loc[ndxLo].sum()/np.logical_not(self.parsedData.isEarlyWithdr.loc[ndxLo]).sum()
+
         self.pred_lauglim()
         self.pred_idobs()
         self.pred_idobs2()
 
     def pred_lauglim(self,nhist=10):
-        ndx = np.logical_and(np.logical_not(self.parsedData.isBrokeFix),
-                             np.logical_not(self.parsedData.isChoiceMiss))
-        # tempbhv = self.parsedData.copy().loc[ndx,:]
+        ndx = np.logical_not(np.logical_or(self.parsedData.isBrokeFix,self.parsedData.isChoiceMiss))
+        tempbhv = self.parsedData.copy().loc[ndx,:]
 
-        y = np.full(self.parsedData.isChoiceLeft.shape,np.nan)
-        y[self.parsedData.isChoiceLeft] = 1
-        y[self.parsedData.isChoiceRight] = 0
-
-        tempR = np.zeros(self.parsedData.isChoiceLeft.shape)
-        tempR[np.logical_and(self.parsedData.isRewarded,self.parsedData.isChoiceLeft)] = 1
-        tempR[np.logical_and(self.parsedData.isRewarded,self.parsedData.isChoiceRight)] = -1
+        tempR = np.zeros(tempbhv.isChoiceLeft.shape)
+        tempR[np.logical_and(tempbhv.isRewarded,tempbhv.isChoiceLeft)] = 1
+        tempR[np.logical_and(tempbhv.isRewarded,tempbhv.isChoiceRight)] = -1
         R = np.zeros((len(tempR),nhist))
 
-        tempC = np.zeros(self.parsedData.isChoiceLeft.shape)
-        tempC[self.parsedData.isChoiceLeft] = 1
-        tempC[self.parsedData.isChoiceRight] = -1
+        tempC = np.zeros(tempbhv.isChoiceLeft.shape)
+        tempC[tempbhv.isChoiceLeft] = 1
+        tempC[tempbhv.isChoiceRight] = -1
         C = np.zeros((len(tempC),nhist))
 
         for i in range(nhist):
             C[i+1:,i] = tempC[:-i-1]
             R[i+1:,i] = tempR[:-i-1]
 
-        X = np.hstack([R,C])
-        X = X[np.logical_not(np.isnan(y)),:]
-        y = y[np.logical_not(np.isnan(y))]
+        desigm_R = pd.DataFrame(columns=['R_t-{0:0>2}'.format(i) for i in range(1,nhist+1)],index=np.arange(len(ndx)),data=np.nan)
+        desigm_R.loc[ndx,:] = R
+        desigm_R.dropna(axis=0,inplace=True)
+        desigm_C = pd.DataFrame(columns=['C_t-{0:0>2}'.format(i) for i in range(1,nhist+1)],index=np.arange(len(ndx)),data=np.nan)
+        desigm_C.loc[ndx,:] = C
+        desigm_C.dropna(axis=0,inplace=True)
+
+        X = pd.concat((desigm_R,desigm_C),axis=1,sort=False)
+
+        tempy = np.full(tempbhv.isChoiceLeft.shape,np.nan)
+        tempy[tempbhv.isChoiceLeft] = 1
+        tempy[tempbhv.isChoiceRight] = 0
+        y = pd.Series(index=X.index,name='isChoiceLeft',data=tempy,dtype=bool)
 
         try:
             self.lauglim = linear_model.LogisticRegression(solver='lbfgs').fit(X=X,y=y)
+            self.lauglim.dataX = X
+            self.lauglim.datay = y
             self.parsedData.loc[:,'lauglim_pLeft'] = np.nan
             self.parsedData.loc[ndx,'lauglim_pLeft'] = self.lauglim.predict_proba(X)[:,1]
             self.parsedData.loc[:,'lauglim_isGreedy'] = np.logical_or(np.logical_and(self.parsedData.lauglim_pLeft>0.5,self.parsedData.isChoiceLeft),
@@ -345,8 +364,8 @@ class parseSess:
 
         ## Panel C - FeedbackDelay
 
-        feedbackDelay = self.parsedData.FeedbackDelay
-        feedbackDelay[self.parsedData.isChoiceBaited] = np.nan
+        feedbackDelay = self.parsedData.FeedbackDelay.copy()
+        feedbackDelay.loc[self.parsedData.isChoiceBaited] = np.nan
         bins = np.histogram_bin_edges(feedbackDelay.dropna(),bins='sturges')
         ha[0,2].hist(feedbackDelay.loc[np.logical_not(self.parsedData.isEarlyWithdr)],color='xkcd:blue',bins=bins,alpha=facealpha,label='valid')
         ha[0,2].hist(feedbackDelay.loc[self.parsedData.isEarlyWithdr],color='xkcd:red',bins=bins,alpha=facealpha,label='earlyWithdr')
@@ -421,7 +440,7 @@ class parseSess:
             df_psyc_idobs2 = pd.DataFrame({'lo':np.log(self.parsedData.idobs2_pLeft/self.parsedData.idobs2_pRight),
                                            'isChoiceLeft':self.parsedData.isChoiceLeft})
             df_psyc_idobs2 = df_psyc_idobs2.loc[np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight),:].copy()
-            df_psyc_idobs2.loc[:,'bin'] = np.digitize(df_psyc_idobs2.lo,np.percentile(df_psyc_idobs2.lo,np.linspace(0,100,nbins+1)))
+            df_psyc_idobs2.loc[:,'bin'] = np.digitize(df_psyc_idobs2.lo,np.unique(np.percentile(df_psyc_idobs2.lo,np.linspace(0,100,nbins+1))))
             df_psyc_idobs2.loc[df_psyc_idobs2.bin==df_psyc_idobs2.bin.max(),'bin']=nbins
             piv_psyc_idobs2 = df_psyc_idobs2.pivot_table(columns='bin').T
             ha[1,2].scatter(piv_psyc_idobs2.lo,piv_psyc_idobs2.isChoiceLeft,label='idobs2')
