@@ -38,6 +38,11 @@ class parseSess:
         Rewarded = np.full(nTrials,False)
         FixBroke = np.full(nTrials,False)
         EarlyWithdrawal = np.full(nTrials,False)
+        CheckedOther = np.full(nTrials,False)
+        tsChoice = np.full(nTrials,np.nan)
+        tsPokeL = [[]]*nTrials
+        tsPokeC = [[]]*nTrials
+        tsPokeR = [[]]*nTrials
         assert(not np.isscalar(tsState0)), "Session is only 1 trial long. Aborting."
         assert(len(tsState0) > 20), "Session is only {} trials long. Aborting.".format(len(tsState0))
         tsState0 = tsState0 - tsState0[0]
@@ -50,22 +55,44 @@ class parseSess:
         for iTrial in range(nTrials):
             listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[iTrial]
             stateTraj[iTrial] = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]-1] #from 1- to 0-based indexing
+
+            if any([PortL in self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item().dtype.names]) :
+                tsPokeL[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[PortL].item()
+
+            if any([PortC in self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item().dtype.names]) :
+                tsPokeC[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[PortC].item()
+
+            if any([PortR in self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item().dtype.names]) :
+                tsPokeR[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[PortR].item()
+
             ChoiceLeft[iTrial] = any(['Lin' in stateTraj[iTrial]])
+            if ChoiceLeft[iTrial]:
+                tsChoice[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['start_Lin'].item()[0]
+                CheckedOther[iTrial] = (tsPokeR[iTrial] > tsChoice[iTrial]).any()
+
             ChoiceRight[iTrial] = any(['Rin' in stateTraj[iTrial]])
+            if ChoiceRight[iTrial]:
+                tsChoice[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['start_Rin'].item()[0]
+                CheckedOther[iTrial] = (tsPokeL[iTrial] > tsChoice[iTrial]).any()
+
             FixBroke[iTrial] = any(['EarlyCout' in stateTraj[iTrial]])
             EarlyWithdrawal[iTrial] = any([any(['EarlyRout' in stateTraj[iTrial]]),any(['EarlyLout' in stateTraj[iTrial]])])
             ChoiceMiss[iTrial] = any(['wait_Sin'in stateTraj[iTrial]]) and not(any([ChoiceLeft[iTrial],ChoiceRight[iTrial]]))
             Rewarded[iTrial] = any([n.startswith('water_') for n in stateTraj[iTrial]])
 
-        isChoiceBaited = np.logical_or(np.logical_and(ChoiceLeft,self.bpod['Custom'].item()['Baited'].item()['Left'].item()),
-                                       np.logical_and(ChoiceRight,self.bpod['Custom'].item()['Baited'].item()['Right'].item()),
+
+        BaitedLeft = self.bpod['Custom'].item()['Baited'].item()['Left'].item().astype(bool)
+        BaitedRight = self.bpod['Custom'].item()['Baited'].item()['Right'].item().astype(bool)
+        isChoiceBaited = np.logical_or(np.logical_and(ChoiceLeft,BaitedLeft),
+                                       np.logical_and(ChoiceRight,BaitedRight),
                                       )
+
         assert(isChoiceBaited[Rewarded].all()), "Impossible trials found: unbaited AND rewarded."
 
         self.parsedData = pd.DataFrame({'iTrial': np.arange(nTrials),
-                                        'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss,
-                                        'isRewarded': Rewarded, 'isBrokeFix': FixBroke, 'isEarlyWithdr': EarlyWithdrawal, 'isChoiceBaited':isChoiceBaited,
-                                        'stateTraj': stateTraj, 'tsState0': tsState0})
+                                        'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isBaitedLeft':BaitedLeft,'isBaitedRight':BaitedRight,
+                                        'isChoiceMiss': ChoiceMiss,'isRewarded': Rewarded,'isBrokeFix': FixBroke, 'isEarlyWithdr': EarlyWithdrawal, 'isChoiceBaited':isChoiceBaited,'isCheckedOther':CheckedOther,
+                                        'stateTraj': stateTraj,'tsState0': tsState0, 'tsChoice': tsChoice, 'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR})
 
         self.parsedData = self.parsedData.set_index('iTrial')
         self.pred_lauglim()
@@ -285,6 +312,7 @@ class parseSess:
         ha[1,2].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
         ha[1,2].set_ylabel('Fraction left choices',fontsize=fs_lab)
         ha[1,2].legend(fancybox=True, framealpha=0.5)
+        ha[1,2].set_aspect(np.diff(ha[1,2].get_xlim()).item()/np.diff(ha[1,2].get_ylim()).item())
 
         # ## Panel G - Vevaio LauGlim
         # nbins = 8
