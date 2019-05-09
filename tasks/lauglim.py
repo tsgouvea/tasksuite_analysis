@@ -82,8 +82,8 @@ class parseSess:
                         pass
                 self.params.Ports_LMR = "".join(LMR)
                 iTrial+=1
-                if any([self.params.Ports_LMR[i] == 'X' for i in range(len(self.params.Ports_LMR))]):
-                    raise RuntimeError("Couldn't figure port assignment (LMR). Aborting.")
+            if any([self.params.Ports_LMR[i] == 'X' for i in range(len(self.params.Ports_LMR))]):
+                raise RuntimeError("Couldn't figure port assignment (LMR). Aborting.")
 
         PortL = 'Port' + str(int(self.params.Ports_LMR))[0] + 'In'
         PortC = 'Port' + str(int(self.params.Ports_LMR))[1] + 'In'
@@ -158,21 +158,21 @@ class parseSess:
                     rewarded_Sin = stateTraj[iTrial][[n.startswith('rewarded_') for n in stateTraj[iTrial]]].item()
                     feedbackDelay[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[rewarded_Sin].item()[0] - np.ravel(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[Sin].item()).min()
 
-            reactionTime[iTrial] = np.nan if np.isclose(bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()['Tup'].item(),bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()[1]).any() else np.diff(bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()).item()
-            movementTime[iTrial] = np.nan if np.isclose(bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()['Tup'].item(),bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Sin'].item()[1]).any() else np.diff(bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Sin'].item()).item()
+            reactionTime[iTrial] = np.nan if np.isclose(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()['Tup'].item(),self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()[1]).any() else np.diff(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()).item()
+            movementTime[iTrial] = np.nan if np.isclose(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()['Tup'].item(),self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Sin'].item()[1]).any() else np.diff(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Sin'].item()).item()
 
-        isChoiceBaited = np.logical_or(np.logical_and(ChoiceLeft,self.bpod['Custom'].item()['Baited'].item()['Left'].item()),
-                                       np.logical_and(ChoiceRight,self.bpod['Custom'].item()['Baited'].item()['Right'].item()),
+        isBaitLeft = self.bpod['Custom'].item()['Baited'].item()['Left'].item()
+        isBaitRight = self.bpod['Custom'].item()['Baited'].item()['Right'].item()
+        isChoiceBaited = np.logical_or(np.logical_and(ChoiceLeft,isBaitLeft),
+                                       np.logical_and(ChoiceRight,isBaitRight),
                                       )
+        isLeftHi = self.bpod['Custom'].item()['LeftHi'].item().astype(bool)
         assert(isChoiceBaited[Rewarded].all()), "Impossible trials found: unbaited AND rewarded."
         # waitingTime[isChoiceBaited] = np.nan
 
-        reactionTime[iTrial] = np.full(nTrials,np.nan)
-        movementTime[iTrial] = np.full(nTrials,np.nan)
-
         self.parsedData = pd.DataFrame({'iTrial': np.arange(nTrials),
-                                        'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss,
-                                        'isRewarded': Rewarded, 'isBrokeFix': FixBroke, 'isEarlyWithdr': EarlyWithdrawal, 'isChoiceBaited':isChoiceBaited,
+                                        'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss,'isLeftHi': isLeftHi,
+                                        'isRewarded': Rewarded, 'isBrokeFix': FixBroke, 'isEarlyWithdr': EarlyWithdrawal, 'isBaitLeft':isBaitLeft, 'isBaitRight':isBaitRight, 'isChoiceBaited':isChoiceBaited,
                                         'stateTraj': stateTraj,'reactionTime':reactionTime, 'movementTime':movementTime, 'waitingTime': waitingTime, 'StimDelay': stimDelay, 'FeedbackDelay': feedbackDelay,
                                         'tsCin': tsCin, 'tsChoice': tsChoice, 'tsRwd': tsRwd,
                                         'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR, 'tsState0': tsState0})
@@ -180,15 +180,31 @@ class parseSess:
         self.parsedData = self.parsedData.set_index('iTrial')
 
         if not 'pLo' in self.params.index:
-            ndx = np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight)
-            ndx = np.logical_and(ndx,np.hstack((False,self.parsedData.isRewarded.iloc[:-1])))
-            leftHi = self.bpod['Custom'].item()['LeftHi'].item().astype(bool)
-            ndxHi = np.logical_or(np.logical_and(self.parsedData.isChoiceLeft,leftHi),
-                                  np.logical_and(self.parsedData.isChoiceRight,np.logical_not(leftHi)))
-            ndxHi = np.logical_and(ndx,ndxHi)
-            self.params.loc['pHi'] = self.parsedData.isRewarded.loc[ndxHi].mean()/np.logical_not(self.parsedData.isEarlyWithdr.loc[ndxHi]).mean()
-            ndxLo = np.logical_and(ndx,np.logical_not(ndxHi))
-            self.params.loc['pLo'] = self.parsedData.isRewarded.loc[ndxLo].sum()/np.logical_not(self.parsedData.isEarlyWithdr.loc[ndxLo]).sum()
+            warnings.warn('No params file. Estimating reward probabilities from data.')
+            isLeftHi = self.parsedData.isLeftHi
+            ndxPrevRwdL = np.hstack((False,np.logical_and(self.parsedData.isRewarded.iloc,self.parsedData.isChoiceLeft)[:-1])).astype(bool)
+            ndxPrevRwdR = np.hstack((False,np.logical_and(self.parsedData.isRewarded.iloc,self.parsedData.isChoiceRight)[:-1])).astype(bool)
+
+            baitHi = np.full(self.parsedData.isRewarded.shape,np.nan)
+            baitHi[np.logical_and(isLeftHi,ndxPrevRwdL)] = self.parsedData.isBaitLeft.loc[np.logical_and(isLeftHi,ndxPrevRwdL)]
+            baitHi[np.logical_and(np.logical_not(isLeftHi),ndxPrevRwdR)] = self.parsedData.isBaitRight.loc[np.logical_and(np.logical_not(isLeftHi),ndxPrevRwdR)]
+
+            baitLo = np.full(self.parsedData.isRewarded.shape,np.nan)
+            baitLo[np.logical_and(isLeftHi,ndxPrevRwdR)] = self.parsedData.isBaitRight.loc[np.logical_and(isLeftHi,ndxPrevRwdR)]
+            baitLo[np.logical_and(np.logical_not(isLeftHi),ndxPrevRwdL)] = self.parsedData.isBaitLeft.loc[np.logical_and(np.logical_not(isLeftHi),ndxPrevRwdL)]
+
+            self.params.loc['pHi'] = np.nanmean(baitHi)*100
+            self.params.loc['pLo'] = pLo = np.nanmean(baitLo)*100
+
+            # ndx = np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight)
+            # ndx = np.logical_and(ndx,np.hstack((False,self.parsedData.isRewarded.iloc[:-1])))
+            # leftHi = self.bpod['Custom'].item()['LeftHi'].item().astype(bool)
+            # ndxHi = np.logical_or(np.logical_and(self.parsedData.isChoiceLeft,leftHi),
+            #                       np.logical_and(self.parsedData.isChoiceRight,np.logical_not(leftHi)))
+            # ndxHi = np.logical_and(ndx,ndxHi)
+            # self.params.loc['pHi'] = self.parsedData.isRewarded.loc[ndxHi].mean()/np.logical_not(self.parsedData.isEarlyWithdr.loc[ndxHi]).mean()
+            # ndxLo = np.logical_and(ndx,np.logical_not(ndxHi))
+            # self.params.loc['pLo'] = self.parsedData.isRewarded.loc[ndxLo].sum()/np.logical_not(self.parsedData.isEarlyWithdr.loc[ndxLo]).sum()
 
         self.pred_lauglim()
         self.pred_idobs()
