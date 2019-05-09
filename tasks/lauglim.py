@@ -44,6 +44,8 @@ class parseSess:
         FixBroke = np.full(nTrials,False)
         EarlyWithdrawal = np.full(nTrials,False)
         waitingTime = np.full(nTrials,np.nan)
+        reactionTime = np.full(nTrials,np.nan)
+        movementTime = np.full(nTrials,np.nan)
         stimDelay = np.full(nTrials,np.nan)
         feedbackDelay = np.full(nTrials,np.nan)
         assert(not np.isscalar(tsState0)), "Session is only 1 trial long. Aborting."
@@ -156,16 +158,22 @@ class parseSess:
                     rewarded_Sin = stateTraj[iTrial][[n.startswith('rewarded_') for n in stateTraj[iTrial]]].item()
                     feedbackDelay[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[rewarded_Sin].item()[0] - np.ravel(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[Sin].item()).min()
 
+            reactionTime[iTrial] = np.nan if np.isclose(bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()['Tup'].item(),bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()[1]).any() else np.diff(bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()).item()
+            movementTime[iTrial] = np.nan if np.isclose(bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()['Tup'].item(),bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Sin'].item()[1]).any() else np.diff(bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Sin'].item()).item()
+
         isChoiceBaited = np.logical_or(np.logical_and(ChoiceLeft,self.bpod['Custom'].item()['Baited'].item()['Left'].item()),
                                        np.logical_and(ChoiceRight,self.bpod['Custom'].item()['Baited'].item()['Right'].item()),
                                       )
         assert(isChoiceBaited[Rewarded].all()), "Impossible trials found: unbaited AND rewarded."
         # waitingTime[isChoiceBaited] = np.nan
 
+        reactionTime[iTrial] = np.full(nTrials,np.nan)
+        movementTime[iTrial] = np.full(nTrials,np.nan)
+
         self.parsedData = pd.DataFrame({'iTrial': np.arange(nTrials),
                                         'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss,
                                         'isRewarded': Rewarded, 'isBrokeFix': FixBroke, 'isEarlyWithdr': EarlyWithdrawal, 'isChoiceBaited':isChoiceBaited,
-                                        'stateTraj': stateTraj, 'WT': waitingTime, 'StimDelay': stimDelay, 'FeedbackDelay': feedbackDelay,
+                                        'stateTraj': stateTraj,'reactionTime':reactionTime, 'movementTime':movementTime, 'waitingTime': waitingTime, 'StimDelay': stimDelay, 'FeedbackDelay': feedbackDelay,
                                         'tsCin': tsCin, 'tsChoice': tsChoice, 'tsRwd': tsRwd,
                                         'tsPokeL': tsPokeL, 'tsPokeC': tsPokeC, 'tsPokeR': tsPokeR, 'tsState0': tsState0})
 
@@ -302,7 +310,7 @@ class parseSess:
             else:
                 prior = postl[iTrial-1] if isChoiceLeft[iTrial-1] else postr[iTrial-1]
                 assert(isChoiceLeft[iTrial-1] or isChoiceRight[iTrial-1]), "Failed to catch an invalid trial"
-                wt = self.parsedData.WT[iTrial-1]
+                wt = self.parsedData.waitingTime[iTrial-1]
                 if thisDelay == 'TruncExp':
                     p_wt_given_r = (np.exp(-wt_lambda*wt) - np.exp(-wt_lambda*wt_max))/(np.exp(-wt_lambda*wt_min) - np.exp(-wt_lambda*wt_max)) # Probability of waiting wt(s) before reward delivery, given that it was a rewarded trial
                 elif thisDelay == 'Uniform':
@@ -457,7 +465,7 @@ class parseSess:
             if ndx.sum() > 0:
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_lauglim = pd.DataFrame({'lo':np.log(temp_bhv.lauglim_pLeft/(1-temp_bhv.lauglim_pLeft)),
-                                                  'wt':temp_bhv.WT})
+                                                  'wt':temp_bhv.waitingTime})
                 df_vevaio_lauglim.loc[:,'bin'] = np.digitize(df_vevaio_lauglim.lo,np.unique(np.percentile(df_vevaio_lauglim.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_lauglim.loc[df_vevaio_lauglim.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,0].scatter(df_vevaio_lauglim.lo,df_vevaio_lauglim.wt,color='xkcd:green',label='_nolegend_',alpha=.1)
@@ -471,7 +479,7 @@ class parseSess:
             if ndx.sum() > 0:
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_lauglim = pd.DataFrame({'lo':np.log(temp_bhv.lauglim_pLeft/(1-temp_bhv.lauglim_pLeft)),
-                                                  'wt':temp_bhv.WT})
+                                                  'wt':temp_bhv.waitingTime})
                 df_vevaio_lauglim.loc[:,'bin'] = np.digitize(df_vevaio_lauglim.lo,np.unique(np.percentile(df_vevaio_lauglim.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_lauglim.loc[df_vevaio_lauglim.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,0].scatter(df_vevaio_lauglim.lo,df_vevaio_lauglim.wt,color='xkcd:red',label='_nolegend_',alpha=.1)
@@ -490,7 +498,7 @@ class parseSess:
             if ndx.sum() > 0:
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_idobs = pd.DataFrame({'lo':np.log(temp_bhv.idobs_pLeft/temp_bhv.idobs_pRight),
-                                                  'wt':temp_bhv.WT})
+                                                  'wt':temp_bhv.waitingTime})
                 df_vevaio_idobs.loc[:,'bin'] = np.digitize(df_vevaio_idobs.lo,np.unique(np.percentile(df_vevaio_idobs.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_idobs.loc[df_vevaio_idobs.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,1].scatter(df_vevaio_idobs.lo,df_vevaio_idobs.wt,color='xkcd:green',label='_nolegend_',alpha=.1)
@@ -504,7 +512,7 @@ class parseSess:
                 ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_idobs = pd.DataFrame({'lo':np.log(temp_bhv.idobs_pLeft/temp_bhv.idobs_pRight),
-                                                  'wt':temp_bhv.WT})
+                                                  'wt':temp_bhv.waitingTime})
                 df_vevaio_idobs.loc[:,'bin'] = np.digitize(df_vevaio_idobs.lo,np.unique(np.percentile(df_vevaio_idobs.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_idobs.loc[df_vevaio_idobs.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,1].scatter(df_vevaio_idobs.lo,df_vevaio_idobs.wt,color='xkcd:red',label='_nolegend_',alpha=.1)
@@ -524,7 +532,7 @@ class parseSess:
             if ndx.sum() > 0:
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_idobs2 = pd.DataFrame({'lo':np.log(temp_bhv.idobs2_pLeft/temp_bhv.idobs2_pRight),
-                                                  'wt':temp_bhv.WT})
+                                                  'wt':temp_bhv.waitingTime})
                 df_vevaio_idobs2.loc[:,'bin'] = np.digitize(df_vevaio_idobs2.lo,np.unique(np.percentile(df_vevaio_idobs2.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_idobs2.loc[df_vevaio_idobs2.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,2].scatter(df_vevaio_idobs2.lo,df_vevaio_idobs2.wt,color='xkcd:green',label='_nolegend_',alpha=.1)
@@ -537,7 +545,7 @@ class parseSess:
                 ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_idobs2 = pd.DataFrame({'lo':np.log(temp_bhv.idobs2_pLeft/temp_bhv.idobs2_pRight),
-                                                  'wt':temp_bhv.WT})
+                                                  'wt':temp_bhv.waitingTime})
                 df_vevaio_idobs2.loc[:,'bin'] = np.digitize(df_vevaio_idobs2.lo,np.unique(np.percentile(df_vevaio_idobs2.lo.dropna(),np.linspace(0,100,nbins+1))))
                 df_vevaio_idobs2.loc[df_vevaio_idobs2.loc[:,'bin']>nbins,'bin'] = nbins
                 ha[2,2].scatter(df_vevaio_idobs2.lo,df_vevaio_idobs2.wt,color='xkcd:red',label='_nolegend_',alpha=.1)
