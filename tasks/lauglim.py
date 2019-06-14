@@ -362,7 +362,7 @@ class parseSess:
         fs_title=18
         lw=2
         facealpha=.4
-        hf, ha = plt.subplots(3,3,figsize=(10,10))
+        hf, ha = plt.subplots(5,3,figsize=(10,15))
 
         ## Panel A - Cumulative Trials
 
@@ -385,8 +385,8 @@ class parseSess:
         feedbackDelay = self.parsedData.FeedbackDelay.copy()
         feedbackDelay.loc[self.parsedData.isChoiceBaited] = np.nan
         bins = np.histogram_bin_edges(feedbackDelay.dropna(),bins='sturges')
-        ha[0,2].hist(feedbackDelay.loc[np.logical_not(self.parsedData.isEarlyWithdr)],color='xkcd:blue',bins=bins,alpha=facealpha,label='valid')
-        ha[0,2].hist(feedbackDelay.loc[self.parsedData.isEarlyWithdr],color='xkcd:red',bins=bins,alpha=facealpha,label='earlyWithdr')
+        ha[0,2].hist(feedbackDelay.loc[np.logical_not(self.parsedData.isChoiceBaited)],color='xkcd:blue',bins=bins,alpha=facealpha,label='baited')
+        ha[0,2].hist(feedbackDelay.loc[self.parsedData.isChoiceBaited],color='xkcd:red',bins=bins,alpha=facealpha,label='notBaited')
         ha[0,2].legend(fancybox=True, framealpha=0.5)
         ha[0,2].set_xlabel('FeedbackDelay',fontsize=fs_lab)
         if 'FeedbackDelaySelection' in self.bpod['Settings'].item()['GUIMeta'].item().dtype.names:
@@ -478,7 +478,7 @@ class parseSess:
             ndx = np.logical_and(self.parsedData.lauglim_isGreedy,
                                  np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
             ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
-            if ndx.sum() > 0:
+            if ndx.any():
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_lauglim = pd.DataFrame({'lo':np.log(temp_bhv.lauglim_pLeft/(1-temp_bhv.lauglim_pLeft)),
                                                   'wt':temp_bhv.waitingTime})
@@ -492,7 +492,7 @@ class parseSess:
             ndx = np.logical_and(np.logical_not(self.parsedData.lauglim_isGreedy),
                                  np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
             ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
-            if ndx.sum() > 0:
+            if ndx.any():
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_lauglim = pd.DataFrame({'lo':np.log(temp_bhv.lauglim_pLeft/(1-temp_bhv.lauglim_pLeft)),
                                                   'wt':temp_bhv.waitingTime})
@@ -511,7 +511,7 @@ class parseSess:
             ndx = np.logical_and(self.parsedData.idobs_isGreedy,
                                  np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
             ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
-            if ndx.sum() > 0:
+            if ndx.any():
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_idobs = pd.DataFrame({'lo':np.log(temp_bhv.idobs_pLeft/temp_bhv.idobs_pRight),
                                                   'wt':temp_bhv.waitingTime})
@@ -522,7 +522,7 @@ class parseSess:
                 ha[2,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.wt,color='xkcd:green',label='greedy',linewidth=lw)
                 ha[2,1].legend(fancybox=True, framealpha=0.5)
 
-            if ndx.sum() > 0:
+            if ndx.any():
                 ndx = np.logical_and(np.logical_not(self.parsedData.idobs_isGreedy),
                                      np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
                 ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
@@ -545,7 +545,7 @@ class parseSess:
             ndx = np.logical_and(self.parsedData.idobs2_isGreedy,
                                  np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
             ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
-            if ndx.sum() > 0:
+            if ndx.any():
                 temp_bhv = self.parsedData[ndx].copy()
                 df_vevaio_idobs2 = pd.DataFrame({'lo':np.log(temp_bhv.idobs2_pLeft/temp_bhv.idobs2_pRight),
                                                   'wt':temp_bhv.waitingTime})
@@ -555,7 +555,7 @@ class parseSess:
                 piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin',aggfunc=np.median).T
                 ha[2,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.wt,color='xkcd:green',label='greedy',linewidth=lw)
 
-            if ndx.sum() > 0:
+            if ndx.any():
                 ndx = np.logical_and(np.logical_not(self.parsedData.idobs2_isGreedy),
                                      np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
                 ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
@@ -571,6 +571,212 @@ class parseSess:
             ha[2,2].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
             ha[2,2].set_ylabel('waiting time (s)',fontsize=fs_lab)
             ha[2,2].set_title('idobs2',fontsize=fs_title)
+
+        ## Panel J - RT LauGlim
+        nbins = 8
+
+        if 'lauglim_pLeft' in self.parsedData.columns:
+
+            ndx = np.logical_and(self.parsedData.lauglim_isGreedy,
+                                 np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
+            if ndx.any():
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_lauglim = pd.DataFrame({'lo':np.log(temp_bhv.lauglim_pLeft/(1-temp_bhv.lauglim_pLeft)),
+                                                  'rt':temp_bhv.reactionTime})
+                df_vevaio_lauglim.loc[:,'bin'] = np.digitize(df_vevaio_lauglim.lo,np.unique(np.percentile(df_vevaio_lauglim.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_lauglim.loc[df_vevaio_lauglim.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[3,0].scatter(df_vevaio_lauglim.lo,df_vevaio_lauglim.rt,color='xkcd:green',label='_nolegend_',alpha=.1)
+                piv_vevaio_lauglim = df_vevaio_lauglim.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[3,0].plot(piv_vevaio_lauglim.lo,piv_vevaio_lauglim.rt,color='xkcd:green',label='greedy',linewidth=lw)
+                ha[3,0].legend(fancybox=True, framealpha=0.5)
+
+            ndx = np.logical_and(np.logical_not(self.parsedData.lauglim_isGreedy),
+                                 np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
+            if ndx.any():
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_lauglim = pd.DataFrame({'lo':np.log(temp_bhv.lauglim_pLeft/(1-temp_bhv.lauglim_pLeft)),
+                                                  'rt':temp_bhv.reactionTime})
+                df_vevaio_lauglim.loc[:,'bin'] = np.digitize(df_vevaio_lauglim.lo,np.unique(np.percentile(df_vevaio_lauglim.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_lauglim.loc[df_vevaio_lauglim.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[3,0].scatter(df_vevaio_lauglim.lo,df_vevaio_lauglim.rt,color='xkcd:red',label='_nolegend_',alpha=.1)
+                piv_vevaio_lauglim = df_vevaio_lauglim.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[3,0].plot(piv_vevaio_lauglim.lo,piv_vevaio_lauglim.rt,color='xkcd:red',label='notGreedy',linewidth=lw)
+                ha[3,0].legend(fancybox=True, framealpha=0.5)
+        ha[3,0].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
+        ha[3,0].set_ylabel('reaction time (s)',fontsize=fs_lab)
+        ha[3,0].set_yscale('log')
+
+        ## Panel K - Vevaio Ideal Observer 1 (ignores reaction time)
+        if 'idobs_pLeft' in self.parsedData.columns:
+            ndx = np.logical_and(self.parsedData.idobs_isGreedy,
+                                 np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
+            if ndx.any():
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_idobs = pd.DataFrame({'lo':np.log(temp_bhv.idobs_pLeft/temp_bhv.idobs_pRight),
+                                                  'rt':temp_bhv.reactionTime})
+                df_vevaio_idobs.loc[:,'bin'] = np.digitize(df_vevaio_idobs.lo,np.unique(np.percentile(df_vevaio_idobs.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_idobs.loc[df_vevaio_idobs.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[3,1].scatter(df_vevaio_idobs.lo,df_vevaio_idobs.rt,color='xkcd:green',label='_nolegend_',alpha=.1)
+                piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[3,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.rt,color='xkcd:green',label='greedy',linewidth=lw)
+                ha[3,1].legend(fancybox=True, framealpha=0.5)
+
+            if ndx.any():
+                ndx = np.logical_and(np.logical_not(self.parsedData.idobs_isGreedy),
+                                     np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+                ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_idobs = pd.DataFrame({'lo':np.log(temp_bhv.idobs_pLeft/temp_bhv.idobs_pRight),
+                                                  'rt':temp_bhv.reactionTime})
+                df_vevaio_idobs.loc[:,'bin'] = np.digitize(df_vevaio_idobs.lo,np.unique(np.percentile(df_vevaio_idobs.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_idobs.loc[df_vevaio_idobs.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[3,1].scatter(df_vevaio_idobs.lo,df_vevaio_idobs.rt,color='xkcd:red',label='_nolegend_',alpha=.1)
+                piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[3,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.rt,color='xkcd:red',label='notGreedy',linewidth=lw)
+                ha[3,1].legend(fancybox=True, framealpha=0.5)
+        ha[3,1].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
+        ha[3,1].set_ylabel('reaction time (s)',fontsize=fs_lab)
+        ha[3,1].set_title('idobs',fontsize=fs_title)
+        ha[3,1].set_yscale('log')
+
+        ## Panel L - Vevaio Ideal Observer 2 (takes reaction time evidence into account)
+
+        if 'idobs2_pLeft' in self.parsedData.columns:
+            ndx = np.logical_and(self.parsedData.idobs2_isGreedy,
+                                 np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
+            if ndx.any():
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_idobs2 = pd.DataFrame({'lo':np.log(temp_bhv.idobs2_pLeft/temp_bhv.idobs2_pRight),
+                                                  'rt':temp_bhv.reactionTime})
+                df_vevaio_idobs2.loc[:,'bin'] = np.digitize(df_vevaio_idobs2.lo,np.unique(np.percentile(df_vevaio_idobs2.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_idobs2.loc[df_vevaio_idobs2.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[3,2].scatter(df_vevaio_idobs2.lo,df_vevaio_idobs2.rt,color='xkcd:green',label='_nolegend_',alpha=.1)
+                piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[3,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.rt,color='xkcd:green',label='greedy',linewidth=lw)
+
+            if ndx.any():
+                ndx = np.logical_and(np.logical_not(self.parsedData.idobs2_isGreedy),
+                                     np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+                ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_idobs2 = pd.DataFrame({'lo':np.log(temp_bhv.idobs2_pLeft/temp_bhv.idobs2_pRight),
+                                                  'rt':temp_bhv.reactionTime})
+                df_vevaio_idobs2.loc[:,'bin'] = np.digitize(df_vevaio_idobs2.lo,np.unique(np.percentile(df_vevaio_idobs2.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_idobs2.loc[df_vevaio_idobs2.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[3,2].scatter(df_vevaio_idobs2.lo,df_vevaio_idobs2.rt,color='xkcd:red',label='_nolegend_',alpha=.1)
+                piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[3,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.rt,color='xkcd:red',label='notGreedy',linewidth=lw)
+                ha[3,2].legend(fancybox=True, framealpha=0.5)
+            ha[3,2].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
+            ha[3,2].set_ylabel('reaction time (s)',fontsize=fs_lab)
+            ha[3,2].set_title('idobs2',fontsize=fs_title)
+
+        ## Panel M - movement time LauGlim
+        nbins = 8
+
+        if 'lauglim_pLeft' in self.parsedData.columns:
+
+            ndx = np.logical_and(self.parsedData.lauglim_isGreedy,
+                                 np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
+            if ndx.any():
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_lauglim = pd.DataFrame({'lo':np.log(temp_bhv.lauglim_pLeft/(1-temp_bhv.lauglim_pLeft)),
+                                                  'mt':temp_bhv.movementTime})
+                df_vevaio_lauglim.loc[:,'bin'] = np.digitize(df_vevaio_lauglim.lo,np.unique(np.percentile(df_vevaio_lauglim.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_lauglim.loc[df_vevaio_lauglim.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[4,0].scatter(df_vevaio_lauglim.lo,df_vevaio_lauglim.mt,color='xkcd:green',label='_nolegend_',alpha=.1)
+                piv_vevaio_lauglim = df_vevaio_lauglim.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[4,0].plot(piv_vevaio_lauglim.lo,piv_vevaio_lauglim.mt,color='xkcd:green',label='greedy',linewidth=lw)
+                ha[4,0].legend(fancybox=True, framealpha=0.5)
+
+            ndx = np.logical_and(np.logical_not(self.parsedData.lauglim_isGreedy),
+                                 np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
+            if ndx.any():
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_lauglim = pd.DataFrame({'lo':np.log(temp_bhv.lauglim_pLeft/(1-temp_bhv.lauglim_pLeft)),
+                                                  'mt':temp_bhv.movementTime})
+                df_vevaio_lauglim.loc[:,'bin'] = np.digitize(df_vevaio_lauglim.lo,np.unique(np.percentile(df_vevaio_lauglim.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_lauglim.loc[df_vevaio_lauglim.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[4,0].scatter(df_vevaio_lauglim.lo,df_vevaio_lauglim.mt,color='xkcd:red',label='_nolegend_',alpha=.1)
+                piv_vevaio_lauglim = df_vevaio_lauglim.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[4,0].plot(piv_vevaio_lauglim.lo,piv_vevaio_lauglim.mt,color='xkcd:red',label='notGreedy',linewidth=lw)
+                ha[4,0].legend(fancybox=True, framealpha=0.5)
+        ha[4,0].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
+        ha[4,0].set_ylabel('movement time (s)',fontsize=fs_lab)
+        ha[4,0].set_yscale('log')
+
+        ## Panel N - Vevaio Ideal Observer 1 (ignores movement time)
+        if 'idobs_pLeft' in self.parsedData.columns:
+            ndx = np.logical_and(self.parsedData.idobs_isGreedy,
+                                 np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
+            if ndx.any():
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_idobs = pd.DataFrame({'lo':np.log(temp_bhv.idobs_pLeft/temp_bhv.idobs_pRight),
+                                                  'mt':temp_bhv.movementTime})
+                df_vevaio_idobs.loc[:,'bin'] = np.digitize(df_vevaio_idobs.lo,np.unique(np.percentile(df_vevaio_idobs.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_idobs.loc[df_vevaio_idobs.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[4,1].scatter(df_vevaio_idobs.lo,df_vevaio_idobs.mt,color='xkcd:green',label='_nolegend_',alpha=.1)
+                piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[4,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.mt,color='xkcd:green',label='greedy',linewidth=lw)
+                ha[4,1].legend(fancybox=True, framealpha=0.5)
+
+            if ndx.any():
+                ndx = np.logical_and(np.logical_not(self.parsedData.idobs_isGreedy),
+                                     np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+                ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_idobs = pd.DataFrame({'lo':np.log(temp_bhv.idobs_pLeft/temp_bhv.idobs_pRight),
+                                                  'mt':temp_bhv.movementTime})
+                df_vevaio_idobs.loc[:,'bin'] = np.digitize(df_vevaio_idobs.lo,np.unique(np.percentile(df_vevaio_idobs.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_idobs.loc[df_vevaio_idobs.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[4,1].scatter(df_vevaio_idobs.lo,df_vevaio_idobs.mt,color='xkcd:red',label='_nolegend_',alpha=.1)
+                piv_vevaio_idobs = df_vevaio_idobs.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[4,1].plot(piv_vevaio_idobs.lo,piv_vevaio_idobs.mt,color='xkcd:red',label='notGreedy',linewidth=lw)
+                ha[4,1].legend(fancybox=True, framealpha=0.5)
+        ha[4,1].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
+        ha[4,1].set_ylabel('movement time (s)',fontsize=fs_lab)
+        ha[4,1].set_title('idobs',fontsize=fs_title)
+        ha[4,1].set_yscale('log')
+
+        ## Panel O - Vevaio Ideal Observer 2 (takes movement time evidence into account)
+
+        if 'idobs2_pLeft' in self.parsedData.columns:
+            ndx = np.logical_and(self.parsedData.idobs2_isGreedy,
+                                 np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+            ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isChoiceBaited))
+            if ndx.any():
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_idobs2 = pd.DataFrame({'lo':np.log(temp_bhv.idobs2_pLeft/temp_bhv.idobs2_pRight),
+                                                  'mt':temp_bhv.movementTime})
+                df_vevaio_idobs2.loc[:,'bin'] = np.digitize(df_vevaio_idobs2.lo,np.unique(np.percentile(df_vevaio_idobs2.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_idobs2.loc[df_vevaio_idobs2.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[4,2].scatter(df_vevaio_idobs2.lo,df_vevaio_idobs2.mt,color='xkcd:green',label='_nolegend_',alpha=.1)
+                piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[4,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.mt,color='xkcd:green',label='greedy',linewidth=lw)
+
+            if ndx.any():
+                ndx = np.logical_and(np.logical_not(self.parsedData.idobs2_isGreedy),
+                                     np.logical_or(self.parsedData.isChoiceLeft,self.parsedData.isChoiceRight))
+                ndx = np.logical_and(ndx,np.logical_not(self.parsedData.isRewarded))
+                temp_bhv = self.parsedData[ndx].copy()
+                df_vevaio_idobs2 = pd.DataFrame({'lo':np.log(temp_bhv.idobs2_pLeft/temp_bhv.idobs2_pRight),
+                                                  'mt':temp_bhv.movementTime})
+                df_vevaio_idobs2.loc[:,'bin'] = np.digitize(df_vevaio_idobs2.lo,np.unique(np.percentile(df_vevaio_idobs2.lo.dropna(),np.linspace(0,100,nbins+1))))
+                df_vevaio_idobs2.loc[df_vevaio_idobs2.loc[:,'bin']>nbins,'bin'] = nbins
+                ha[4,2].scatter(df_vevaio_idobs2.lo,df_vevaio_idobs2.mt,color='xkcd:red',label='_nolegend_',alpha=.1)
+                piv_vevaio_idobs2 = df_vevaio_idobs2.pivot_table(columns='bin',aggfunc=np.median).T
+                ha[4,2].plot(piv_vevaio_idobs2.lo,piv_vevaio_idobs2.mt,color='xkcd:red',label='notGreedy',linewidth=lw)
+                ha[4,2].legend(fancybox=True, framealpha=0.5)
+            ha[4,2].set_xlabel(r'$ log \left( \frac{P_{Left}}{P_{Right}} \right)$',fontsize=fs_lab)
+            ha[4,2].set_ylabel('movement time (s)',fontsize=fs_lab)
+            ha[4,2].set_title('idobs2',fontsize=fs_title)
 
         plt.suptitle(self.fname)
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
