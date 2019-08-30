@@ -22,9 +22,9 @@ class parseSess:
         try:
             self.params = pd.Series({n: np.asscalar(self.bpod['Settings'].item()['GUI'].item()[n]) for n in self.bpod['Settings'].item()['GUI'].item().dtype.names})
         except Exception as e:
-            print(e)
             self.params = pd.Series()
             warnings.warn('Could not load settings.')
+            print(e)
         self.parse()
 
     def parse(self):
@@ -93,8 +93,7 @@ class parseSess:
         for iTrial in range(nTrials):
             listStates = self.bpod['RawData'].item()['OriginalStateNamesByNumber'].item()[iTrial]
             stateTraj[iTrial] = listStates[self.bpod['RawData'].item()['OriginalStateData'].item()[iTrial]-1] #from 1- to 0-based indexing
-
-            tsCin[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Cin'].item()[1]
+            tsCin[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Cin'].item().ravel()[-2]
 
             if any([PortL in self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item().dtype.names]) :
                 tsPokeL[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()[PortL].item()
@@ -134,7 +133,7 @@ class parseSess:
                 tsRwd[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[stateTraj[iTrial][[n.startswith('water_') for n in stateTraj[iTrial]]].item()].item()[0]
                 waitingTime[iTrial] = tsRwd[iTrial]-tsChoice[iTrial]
             else:
-                ndx = np.array([n.startswith('Early') for n in stateTraj[iTrial]])
+                ndx = np.array([n.startswith('EarlyR') or n.startswith('EarlyL') for n in stateTraj[iTrial]])
                 ndx = np.logical_or(ndx,np.array([n.startswith('unrewarded') for n in stateTraj[iTrial]]))
                 #
                 if any(ndx):
@@ -142,7 +141,7 @@ class parseSess:
                     waitingTime[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()[mystate].item()[0] - tsChoice[iTrial]
 
             if any(['stillSampling' in stateTraj[iTrial]]):
-                stimDelay[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()[1] - self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Cin'].item()[0]
+                stimDelay[iTrial] = self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()[1] - self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Cin'].item().ravel()[-2]
             else:
                 stimDelay[iTrial] = np.diff(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['Cin'].item()).item()
 
@@ -206,9 +205,9 @@ class parseSess:
             # ndxLo = np.logical_and(ndx,np.logical_not(ndxHi))
             # self.params.loc['pLo'] = self.parsedData.isRewarded.loc[ndxLo].sum()/np.logical_not(self.parsedData.isEarlyWithdr.loc[ndxLo]).sum()
 
-        self.pred_lauglim()
-        self.pred_idobs()
-        self.pred_idobs2()
+        # self.pred_lauglim()
+        # self.pred_idobs()
+        # self.pred_idobs2()
 
     def pred_lauglim(self,nhist=10):
         ndx = np.logical_not(np.logical_or(self.parsedData.isBrokeFix,self.parsedData.isChoiceMiss))
