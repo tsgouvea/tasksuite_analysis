@@ -48,6 +48,7 @@ class parseSess:
         movementTime = np.full(nTrials,np.nan)
         stimDelay = np.full(nTrials,np.nan)
         feedbackDelay = np.full(nTrials,np.nan)
+        iBlock = self.bpod['Custom'].item()['BlockNumber'].item()
         assert(not np.isscalar(tsState0)), "Session is only 1 trial long. Aborting."
         assert(len(tsState0) > 20), "Session is only {} trials long. Aborting.".format(len(tsState0))
         tsState0 = tsState0 - tsState0[0]
@@ -160,8 +161,8 @@ class parseSess:
             reactionTime[iTrial] = np.nan if np.isclose(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()['Tup'].item(),self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()[1]).any() else np.diff(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['stillSampling'].item()).item()
             movementTime[iTrial] = np.nan if np.isclose(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['Events'].item()['Tup'].item(),self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Sin'].item()[1]).any() else np.diff(self.bpod['RawEvents'].item()['Trial'].item()[iTrial]['States'].item()['wait_Sin'].item()).item()
 
-        isBaitLeft = self.bpod['Custom'].item()['Baited'].item()['Left'].item()
-        isBaitRight = self.bpod['Custom'].item()['Baited'].item()['Right'].item()
+        isBaitLeft = self.bpod['Custom'].item()['Baited'].item()['Left'].item().astype(bool)
+        isBaitRight = self.bpod['Custom'].item()['Baited'].item()['Right'].item().astype(bool)
         isChoiceBaited = np.logical_or(np.logical_and(ChoiceLeft,isBaitLeft),
                                        np.logical_and(ChoiceRight,isBaitRight),
                                       )
@@ -169,7 +170,7 @@ class parseSess:
         assert(isChoiceBaited[Rewarded].all()), "Impossible trials found: unbaited AND rewarded."
         # waitingTime[isChoiceBaited] = np.nan
 
-        self.parsedData = pd.DataFrame({'iTrial': np.arange(nTrials),
+        self.parsedData = pd.DataFrame({'iTrial': np.arange(nTrials),'iBlock': iBlock,
                                         'isChoiceLeft': ChoiceLeft, 'isChoiceRight': ChoiceRight, 'isChoiceMiss': ChoiceMiss,'isLeftHi': isLeftHi,
                                         'isRewarded': Rewarded, 'isBrokeFix': FixBroke, 'isEarlyWithdr': EarlyWithdrawal, 'isBaitLeft':isBaitLeft, 'isBaitRight':isBaitRight, 'isChoiceBaited':isChoiceBaited,
                                         'stateTraj': stateTraj,'reactionTime':reactionTime, 'movementTime':movementTime, 'waitingTime': waitingTime, 'StimDelay': stimDelay, 'FeedbackDelay': feedbackDelay,
@@ -204,6 +205,9 @@ class parseSess:
             # self.params.loc['pHi'] = self.parsedData.isRewarded.loc[ndxHi].mean()/np.logical_not(self.parsedData.isEarlyWithdr.loc[ndxHi]).mean()
             # ndxLo = np.logical_and(ndx,np.logical_not(ndxHi))
             # self.params.loc['pLo'] = self.parsedData.isRewarded.loc[ndxLo].sum()/np.logical_not(self.parsedData.isEarlyWithdr.loc[ndxLo]).sum()
+
+        self.parsedData.loc[:,'pLo'] = self.params.loc['pLo']
+        self.parsedData.loc[:,'pHi'] = self.params.loc['pHi']
 
         # self.pred_lauglim()
         # self.pred_idobs()
@@ -799,6 +803,33 @@ class parseSess:
 
         """
 
+    def to_stan(self,cols=None,rows=None):
+
+        ndxCol = ['isChoiceLeft', 'isRewarded','isChoiceBaited',
+                  'subj', 'sess','waitingTime', 'reactionTime', 'movementTime'] if cols is None else cols
+        ndxRow = np.logical_and((self.parsedData.isChoiceLeft | self.parsedData.isChoiceRight), np.logical_not(self.parsedData.isEarlyWithdr)) if rows is None else rows
+        df_stan = self.parsedData.loc[ndxRow, ndxCol].copy()
+        df_stan.loc[:,df_stan.dtypes == bool] = df_stan.loc[:,df_stan.dtypes == bool].astype(int)
+        # df_stan = df.copy()  # .iloc[10000:12000,:].copy()
+        dict_subj = {i + 1: n for i, n in enumerate(df_stan.subj.drop_duplicates().sort_values())}
+        for isubj, subj in dict_subj.items():
+            df_stan.loc[df_stan.subj == subj, 'subj'] = isubj
+
+        dict_sess = {i + 1: n for i, n in enumerate(df_stan.sess.drop_duplicates().sort_values())}
+        for isess, sess in dict_sess.items():
+            df_stan.loc[df_stan.sess == sess, 'sess'] = isess
+
+        stan_data = df_stan.to_dict(orient='list')
+        stan_data['N'] = df_stan.shape[0]
+        stan_data['L'] = len(dict_subj)
+        stan_data['S'] = len(dict_sess)
+        stan_data['subj_per_sess'] = df_stan.drop_duplicates(['subj', 'sess']).sort_values('sess').subj.values
+        stan_data['dict_subj'] = dict_subj
+        stan_data['dict_sess'] = dict_sess
+        return stan_data
+        # pickle_stan_data = os.path.join('data', 'stan_matching_fix.pickle')
+        # with open(pickle_stan_data,'wb') as fhandle:
+        #     pickle.dump(stan_data,fhandle)
 
 
     """
