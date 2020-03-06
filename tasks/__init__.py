@@ -1,5 +1,10 @@
+import pickle
+import os
+
+import numpy as np
+import pandas as pd
+
 from pkg_resources import get_distribution, DistributionNotFound
-import os.path
 
 try:
     _dist = get_distribution('tasksuite')
@@ -13,3 +18,5 @@ except DistributionNotFound:
     __version__ = 'Please install this project with setup.py'
 else:
     __version__ = _dist.version
+
+from .utils import *
